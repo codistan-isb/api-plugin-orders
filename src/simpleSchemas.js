@@ -343,6 +343,11 @@ export const CommonOrder = new SimpleSchema({
     type: String,
     optional: true
   },
+  internalOrderId: {
+    type: String,
+    optional: true
+  },
+  
   originAddress: {
     type: OrderAddress,
     optional: true
@@ -1027,6 +1032,7 @@ export const Order = new SimpleSchema({
     type: String,
     optional: true
   },
+  
   "anonymousAccessTokens": {
     type: Array,
     optional: true
