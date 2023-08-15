@@ -91,7 +91,6 @@ export default async function updateGroupTotals(
     // This needs to be rewritten soon for discounts to work when there are multiple fulfillment groups.
     // Probably the client should be sending all applied discount IDs and amounts in the order input (by group),
     // and include total discount in `groupInput.totalPrice`, and then we simply verify that they are valid here.
-
     // const expectedTotal = Math.max(expectedGroupTotal - discountTotal, 0);
 
     const expectedTotal = Math.max(expectedGroupTotal, 0);
