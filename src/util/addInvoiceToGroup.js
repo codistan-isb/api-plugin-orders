@@ -17,10 +17,13 @@ export default function addInvoiceToGroup({
   groupDiscountTotal,
   groupSurchargeTotal,
   taxableAmount,
-  taxTotal
+  taxTotal,
 }) {
   // Items
-  const itemTotal = +accounting.toFixed(group.items.reduce((sum, item) => (sum + item.subtotal), 0), 3);
+  const itemTotal = +accounting.toFixed(
+    group.items.reduce((sum, item) => sum + item.subtotal, 0),
+    3
+  );
 
   // Taxes
   const effectiveTaxRate = taxableAmount > 0 ? taxTotal / taxableAmount : 0;
@@ -33,7 +36,21 @@ export default function addInvoiceToGroup({
   // Totals
   // To avoid rounding errors, be sure to keep this calculation the same between here and
   // `buildOrderInputFromCart.js` in the client code.
-  const total = +accounting.toFixed(Math.max(0, itemTotal + fulfillmentTotal + taxTotal + groupSurchargeTotal - groupDiscountTotal), 3);
+  // const total = +accounting.toFixed(Math.max(0, itemTotal + fulfillmentTotal + taxTotal + groupSurchargeTotal - groupDiscountTotal), 3);
+
+  let newDiscount = itemTotal - groupDiscountTotal;
+
+  let total = +accounting.toFixed(
+    Math.max(
+      0,
+      itemTotal +
+        fulfillmentTotal +
+        taxTotal +
+        groupSurchargeTotal -
+        newDiscount
+    ),
+    3
+  );
 
   group.invoice = {
     currencyCode,
@@ -44,6 +61,6 @@ export default function addInvoiceToGroup({
     surcharges: groupSurchargeTotal,
     taxableAmount,
     taxes: taxTotal,
-    total
+    total,
   };
 }

@@ -107,6 +107,7 @@ export default async function splitOrderItem(context, input) {
     };
 
     // Update group shipping, tax, totals, etc.
+    console.log("updateGroupTotals 3");
     const { groupSurcharges } = await updateGroupTotals(context, {
       accountId,
       billingAddress,

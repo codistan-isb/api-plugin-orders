@@ -20,17 +20,20 @@ import getSurchargesForGroup from "./getSurchargesForGroup.js";
  * @param {String} selectedFulfillmentMethodId ID of the fulfillment method option chosen by the user
  * @returns {Promise<Object>} Object with surcharge and tax info on it
  */
-export default async function updateGroupTotals(context, {
-  accountId,
-  billingAddress = null,
-  cartId = null,
-  currencyCode,
-  discountTotal = 0,
-  expectedGroupTotal,
-  group,
-  orderId,
-  selectedFulfillmentMethodId
-}) {
+export default async function updateGroupTotals(
+  context,
+  {
+    accountId,
+    billingAddress = null,
+    cartId = null,
+    currencyCode,
+    discountTotal = 0,
+    expectedGroupTotal,
+    group,
+    orderId,
+    selectedFulfillmentMethodId,
+  }
+) {
   // Apply shipment method
   await addShipmentMethodToGroup(context, {
     accountId,
@@ -40,22 +43,22 @@ export default async function updateGroupTotals(context, {
     discountTotal,
     group,
     orderId,
-    selectedFulfillmentMethodId
+    selectedFulfillmentMethodId,
   });
 
-  const {
-    groupSurcharges,
-    groupSurchargeTotal
-  } = await getSurchargesForGroup(context, {
-    accountId,
-    billingAddress,
-    cartId,
-    currencyCode,
-    discountTotal,
-    group,
-    orderId,
-    selectedFulfillmentMethodId
-  });
+  const { groupSurcharges, groupSurchargeTotal } = await getSurchargesForGroup(
+    context,
+    {
+      accountId,
+      billingAddress,
+      cartId,
+      currencyCode,
+      discountTotal,
+      group,
+      orderId,
+      selectedFulfillmentMethodId,
+    }
+  );
 
   // Calculate and set taxes. Mutates group object in addition to returning the totals.
   const { taxTotal, taxableAmount } = await addTaxesToGroup(context, {
@@ -66,8 +69,11 @@ export default async function updateGroupTotals(context, {
     discountTotal,
     group,
     orderId,
-    surcharges: groupSurcharges
+    surcharges: groupSurcharges,
   });
+
+  console.log("group is ", group);
+  // discountTotal = group.subTotal - discountTotal;
 
   // Build and set the group invoice
   addInvoiceToGroup({
@@ -76,7 +82,7 @@ export default async function updateGroupTotals(context, {
     groupDiscountTotal: discountTotal,
     groupSurchargeTotal,
     taxableAmount,
-    taxTotal
+    taxTotal,
   });
 
   if (expectedGroupTotal) {
@@ -92,6 +98,8 @@ export default async function updateGroupTotals(context, {
     // Compare expected and actual totals to make sure client sees correct calculated price
     // Error if we calculate total price differently from what the client has shown as the preview.
     // It's important to keep this after adding and verifying the shipmentMethod and order item prices.
+    console.log("group invoice ttotal", group.invoice);
+
     compareExpectedAndActualTotals(group.invoice.total, expectedTotal);
   }
 
@@ -99,6 +107,6 @@ export default async function updateGroupTotals(context, {
     groupSurcharges,
     groupSurchargeTotal,
     taxableAmount,
-    taxTotal
+    taxTotal,
   };
 }

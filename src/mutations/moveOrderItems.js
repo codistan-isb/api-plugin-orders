@@ -120,6 +120,7 @@ export default async function moveOrderItems(context, input) {
     };
 
     // Update group shipping, tax, totals, etc.
+    console.log("updateGroupTotals 2");
     const { groupSurcharges } = await updateGroupTotals(context, {
       accountId,
       billingAddress,

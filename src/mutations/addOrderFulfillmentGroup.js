@@ -1,6 +1,10 @@
 import SimpleSchema from "simpl-schema";
 import ReactionError from "@reactioncommerce/reaction-error";
-import { Order as OrderSchema, orderFulfillmentGroupInputSchema, orderItemInputSchema } from "../simpleSchemas.js";
+import {
+  Order as OrderSchema,
+  orderFulfillmentGroupInputSchema,
+  orderItemInputSchema,
+} from "../simpleSchemas.js";
 import buildOrderFulfillmentGroupFromInput from "../util/buildOrderFulfillmentGroupFromInput.js";
 import updateGroupStatusFromItemStatus from "../util/updateGroupStatusFromItemStatus.js";
 import updateGroupTotals from "../util/updateGroupTotals.js";
@@ -8,23 +12,23 @@ import updateGroupTotals from "../util/updateGroupTotals.js";
 const groupInputSchema = orderFulfillmentGroupInputSchema.clone().extend({
   // Make items optional since we have the option of moving items
   // from another group
-  "items": {
+  items: {
     type: Array,
     optional: true,
-    minCount: 1
+    minCount: 1,
   },
-  "items.$": orderItemInputSchema
+  "items.$": orderItemInputSchema,
 });
 
 const inputSchema = new SimpleSchema({
-  "fulfillmentGroup": groupInputSchema,
-  "moveItemIds": {
+  fulfillmentGroup: groupInputSchema,
+  moveItemIds: {
     type: Array,
     optional: true,
-    minCount: 1
+    minCount: 1,
   },
   "moveItemIds.$": String,
-  "orderId": String
+  orderId: String,
 });
 
 /**
@@ -39,11 +43,7 @@ const inputSchema = new SimpleSchema({
 export default async function addOrderFulfillmentGroup(context, input) {
   inputSchema.validate(input);
 
-  const {
-    fulfillmentGroup: inputGroup,
-    moveItemIds,
-    orderId
-  } = input;
+  const { fulfillmentGroup: inputGroup, moveItemIds, orderId } = input;
 
   const { appEvents, collections, userId } = context;
   const { Orders } = collections;
@@ -53,7 +53,11 @@ export default async function addOrderFulfillmentGroup(context, input) {
   if (!order) throw new ReactionError("not-found", "Order not found");
 
   // Allow update if the account has "orders" permission
-  await context.validatePermissions(`reaction:legacy:orders:${order._id}`, "update", { shopId: order.shopId });
+  await context.validatePermissions(
+    `reaction:legacy:orders:${order._id}`,
+    "update",
+    { shopId: order.shopId }
+  );
 
   const { accountId, billingAddress, cartId, currencyCode } = order;
 
@@ -68,77 +72,91 @@ export default async function addOrderFulfillmentGroup(context, input) {
       { shopId: order.shopId }
     );
 
-    updatedGroups = await Promise.all(order.shipping.map(async (group) => {
-      let movedSomeItems = false;
-      const updatedItems = group.items.reduce((list, item) => {
-        if (moveItemIds.includes(item._id)) {
-          movingItems.push(item);
-          movedSomeItems = true;
-        } else {
-          list.push(item);
+    updatedGroups = await Promise.all(
+      order.shipping.map(async (group) => {
+        let movedSomeItems = false;
+        const updatedItems = group.items.reduce((list, item) => {
+          if (moveItemIds.includes(item._id)) {
+            movingItems.push(item);
+            movedSomeItems = true;
+          } else {
+            list.push(item);
+          }
+          return list;
+        }, []);
+
+        if (!movedSomeItems) return group;
+
+        if (updatedItems.length === 0) {
+          throw new ReactionError(
+            "invalid-param",
+            "moveItemIds would result in group having no items"
+          );
         }
-        return list;
-      }, []);
 
-      if (!movedSomeItems) return group;
+        const updatedGroup = {
+          ...group,
+          // There is a convenience itemIds prop, so update that, too
+          itemIds: updatedItems.map((item) => item._id),
+          items: updatedItems,
+          totalItemQuantity: updatedItems.reduce(
+            (sum, item) => sum + item.quantity,
+            0
+          ),
+        };
 
-      if (updatedItems.length === 0) {
-        throw new ReactionError("invalid-param", "moveItemIds would result in group having no items");
-      }
+        // Update group shipping, tax, totals, etc.
+        console.log("updateGroupTotals 1");
+        const { groupSurcharges } = await updateGroupTotals(context, {
+          accountId,
+          billingAddress,
+          cartId,
+          currencyCode,
+          discountTotal: updatedGroup.invoice.discounts,
+          group: updatedGroup,
+          orderId,
+          selectedFulfillmentMethodId: updatedGroup.shipmentMethod._id,
+        });
 
-      const updatedGroup = {
-        ...group,
-        // There is a convenience itemIds prop, so update that, too
-        itemIds: updatedItems.map((item) => item._id),
-        items: updatedItems,
-        totalItemQuantity: updatedItems.reduce((sum, item) => sum + item.quantity, 0)
-      };
+        // Push all group surcharges to overall order surcharge array.
+        // Currently, we do not save surcharges per group
+        orderSurcharges.push(...groupSurcharges);
 
-      // Update group shipping, tax, totals, etc.
-      const { groupSurcharges } = await updateGroupTotals(context, {
-        accountId,
-        billingAddress,
-        cartId,
-        currencyCode,
-        discountTotal: updatedGroup.invoice.discounts,
-        group: updatedGroup,
-        orderId,
-        selectedFulfillmentMethodId: updatedGroup.shipmentMethod._id
-      });
+        // Ensure proper group status
+        updateGroupStatusFromItemStatus(updatedGroup);
 
-      // Push all group surcharges to overall order surcharge array.
-      // Currently, we do not save surcharges per group
-      orderSurcharges.push(...groupSurcharges);
-
-      // Ensure proper group status
-      updateGroupStatusFromItemStatus(updatedGroup);
-
-      // Return the group, with items and workflow potentially updated.
-      return updatedGroup;
-    }));
+        // Return the group, with items and workflow potentially updated.
+        return updatedGroup;
+      })
+    );
 
     if (moveItemIds.length !== movingItems.length) {
-      throw new ReactionError("invalid-param", "Some moveItemIds did not match any item IDs on the order");
+      throw new ReactionError(
+        "invalid-param",
+        "Some moveItemIds did not match any item IDs on the order"
+      );
     }
   } else {
     updatedGroups = [...order.shipping];
-    if (Array.isArray(order.surcharges)) orderSurcharges.push(...order.surcharges);
+    if (Array.isArray(order.surcharges))
+      orderSurcharges.push(...order.surcharges);
   }
 
   // Now build the new group we are adding
-  const { group: newGroup, groupSurcharges } = await buildOrderFulfillmentGroupFromInput(context, {
-    accountId,
-    // If we are moving any items from existing groups to this new group, push those into
-    // the newGroup items array.
-    additionalItems: movingItems,
-    billingAddress,
-    cartId,
-    currencyCode,
-    // No support for discounts for now. Pending future promotions revamp.
-    discountTotal: 0,
-    inputGroup,
-    orderId
-  });
+  const { group: newGroup, groupSurcharges } =
+    await buildOrderFulfillmentGroupFromInput(context, {
+      accountId,
+      // If we are moving any items from existing groups to this new group, push those into
+      // the newGroup items array.
+      additionalItems: movingItems,
+      billingAddress,
+      cartId,
+      currencyCode,
+      // No support for discounts for now. Pending future promotions revamp.
+      discountTotal: 0,
+      inputGroup,
+      orderId,
+    });
 
   // Add the new group to the order groups list
   updatedGroups.push(newGroup);
@@ -152,9 +170,12 @@ export default async function addOrderFulfillmentGroup(context, input) {
     $set: {
       shipping: updatedGroups,
       surcharges: orderSurcharges,
-      totalItemQuantity: updatedGroups.reduce((sum, group) => sum + group.totalItemQuantity, 0),
-      updatedAt: new Date()
-    }
+      totalItemQuantity: updatedGroups.reduce(
+        (sum, group) => sum + group.totalItemQuantity,
+        0
+      ),
+      updatedAt: new Date(),
+    },
   };
 
   OrderSchema.validate(modifier, { modifier: true });
@@ -164,11 +185,12 @@ export default async function addOrderFulfillmentGroup(context, input) {
     modifier,
     { returnOriginal: false }
   );
-  if (modifiedCount === 0 || !updatedOrder) throw new ReactionError("server-error", "Unable to update order");
+  if (modifiedCount === 0 || !updatedOrder)
+    throw new ReactionError("server-error", "Unable to update order");
 
   await appEvents.emit("afterOrderUpdate", {
     order: updatedOrder,
-    updatedBy: userId
+    updatedBy: userId,
   });
 
   return { newFulfillmentGroupId: newGroup._id, order: updatedOrder };

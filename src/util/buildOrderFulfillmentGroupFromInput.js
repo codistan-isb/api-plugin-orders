@@ -17,34 +17,52 @@ import updateGroupTotals from "./updateGroupTotals.js";
  * @param {Object} cart - the cart this order is being created from
  * @returns {Promise<Object>} The fulfillment group
  */
-export default async function buildOrderFulfillmentGroupFromInput(context, {
-  accountId,
-  additionalItems,
-  billingAddress,
-  cartId,
-  currencyCode,
-  discountTotal,
-  inputGroup,
-  orderId,
-  cart
-}) {
-  const { data, items, selectedFulfillmentMethodId, shopId, totalPrice: expectedGroupTotal, type } = inputGroup;
+export default async function buildOrderFulfillmentGroupFromInput(
+  context,
+  {
+    accountId,
+    additionalItems,
+    billingAddress,
+    cartId,
+    currencyCode,
+    discountTotal,
+    inputGroup,
+    orderId,
+    cart,
+  }
+) {
+  const {
+    data,
+    items,
+    selectedFulfillmentMethodId,
+    shopId,
+    totalPrice: expectedGroupTotal,
+    type,
+  } = inputGroup;
 
   const group = {
     _id: Random.id(),
     address: data ? data.shippingAddress : null,
     shopId,
     type,
-    workflow: { status: "new", workflow: ["new"] }
+    workflow: { status: "new", workflow: ["new"] },
   };
+
+  console.log("group is 4 is", group);
 
   // Build the final order item objects. As part of this, we look up the variant in the system and make sure that
   // the price is what the caller expects it to be.
   if (items) {
-    group.items = await Promise.all(items.map((inputItem) => buildOrderItem(context, { currencyCode, inputItem, cart })));
+    group.items = await Promise.all(
+      items.map((inputItem) =>
+        buildOrderItem(context, { currencyCode, inputItem, cart })
+      )
+    );
   } else {
     group.items = [];
   }
+
+  console.log("items are ", items);
 
   if (Array.isArray(additionalItems) && additionalItems.length) {
     group.items.push(...additionalItems);
@@ -52,30 +70,30 @@ export default async function buildOrderFulfillmentGroupFromInput(context, {
 
   // Add some more properties for convenience
   group.itemIds = group.items.map((item) => item._id);
-  group.totalItemQuantity = group.items.reduce((sum, item) => sum + item.quantity, 0);
+  group.totalItemQuantity = group.items.reduce(
+    (sum, item) => sum + item.quantity,
+    0
+  );
 
-  const {
-    groupSurcharges,
-    groupSurchargeTotal,
-    taxableAmount,
-    taxTotal
-  } = await updateGroupTotals(context, {
-    accountId,
-    billingAddress,
-    cartId,
-    currencyCode,
-    discountTotal,
-    expectedGroupTotal,
-    group,
-    orderId,
-    selectedFulfillmentMethodId
-  });
+  console.log("updateGroupTotals 4", group);
+  const { groupSurcharges, groupSurchargeTotal, taxableAmount, taxTotal } =
+    await updateGroupTotals(context, {
+      accountId,
+      billingAddress,
+      cartId,
+      currencyCode,
+      discountTotal,
+      expectedGroupTotal,
+      group,
+      orderId,
+      selectedFulfillmentMethodId,
+    });
 
   return {
     group,
     groupSurcharges,
     groupSurchargeTotal,
     taxableAmount,
-    taxTotal
+    taxTotal,
   };
 }
