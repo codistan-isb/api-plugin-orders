@@ -38,7 +38,15 @@ export default function addInvoiceToGroup({
   // `buildOrderInputFromCart.js` in the client code.
   // const total = +accounting.toFixed(Math.max(0, itemTotal + fulfillmentTotal + taxTotal + groupSurchargeTotal - groupDiscountTotal), 3);
 
-  let newDiscount = itemTotal - groupDiscountTotal;
+  console.log("group discount total", groupDiscountTotal);
+  console.log("item total is ", itemTotal);
+
+  let newDiscount = 0;
+
+  if (groupDiscountTotal !== 0) {
+    console.log("coming to condition");
+    newDiscount = itemTotal - groupDiscountTotal;
+  }
 
   let total = +accounting.toFixed(
     Math.max(
@@ -51,6 +59,10 @@ export default function addInvoiceToGroup({
     ),
     3
   );
+
+  console.log("newDiscount", newDiscount);
+
+  console.log("total is ", total);
 
   group.invoice = {
     currencyCode,
