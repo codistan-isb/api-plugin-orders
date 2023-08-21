@@ -1049,6 +1049,10 @@ export const Order = new SimpleSchema({
     type: String,
     optional: true
   },
+  internalOrderId: {
+    type: Number,
+    optional: true
+  },
   "createdAt": Date,
   "currencyCode": String,
   "customFields": {
