@@ -188,11 +188,12 @@ export default async function placeOrder(context, input) {
     shopId
   } = orderInput;
   const { accountId, appEvents, collections, getFunctionsOfType, userId } = context;
-  const { Orders, Cart } = collections;
+  const { Orders, Cart , Shops } = collections;
 
   const shop = await context.queries.shopById(context, shopId);
+  console.log("shop",shop)
   if (!shop) throw new ReactionError("not-found", "Shop not found");
-
+  let newOrderId=shop?.lastOrderId? parseInt(shop?.lastOrderId)+1:1;
   if (!userId && !shop.allowGuestCheckout) {
     throw new ReactionError("access-denied", "Guest checkout not allowed");
   }
@@ -321,8 +322,8 @@ export default async function placeOrder(context, input) {
   }
 
   order.referenceId = referenceId;
-
-
+  console.log("newOrderId",newOrderId);
+  order.internalOrderId=newOrderId;
   // Apply custom order data transformations from plugins
   const transformCustomOrderFieldsFuncs = getFunctionsOfType("transformCustomOrderFields");
   if (transformCustomOrderFieldsFuncs.length > 0) {
@@ -342,7 +343,9 @@ export default async function placeOrder(context, input) {
   // Validate and save
   OrderSchema.validate(order);
   await Orders.insertOne(order);
-
+  await Shops.updateOne({_id:shop._id},{
+    $set:{lastOrderId:newOrderId}
+  });
   await appEvents.emit("afterOrderCreate", { createdBy: userId, order });
 
   return {
