@@ -191,7 +191,6 @@ export default async function placeOrder(context, input) {
   const { Orders, Cart , Shops } = collections;
 
   const shop = await context.queries.shopById(context, shopId);
-  console.log("shop",shop)
   if (!shop) throw new ReactionError("not-found", "Shop not found");
   let newOrderId=shop?.lastOrderId? parseInt(shop?.lastOrderId)+1:1;
   if (!userId && !shop.allowGuestCheckout) {
@@ -321,8 +320,7 @@ export default async function placeOrder(context, input) {
     }
   }
 
-  order.referenceId = referenceId;
-  console.log("newOrderId",newOrderId);
+  order.referenceId = newOrderId.toString();
   order.internalOrderId=newOrderId;
   // Apply custom order data transformations from plugins
   const transformCustomOrderFieldsFuncs = getFunctionsOfType("transformCustomOrderFields");
