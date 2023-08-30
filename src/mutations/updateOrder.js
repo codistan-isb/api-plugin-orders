@@ -86,6 +86,5 @@ export default async function updateOrder(context, input) {
     order: updatedOrder,
     updatedBy: userId
   });
-
   return { order: updatedOrder };
 }

@@ -16,7 +16,6 @@ export default async function imageURLs(parent, connectionArgs, context, info) {
   const { Products } = collections;
   
   const productImages= await Products.findOne({"_id":parent.productId});
-  console.log("productImages");
   if(productImages?.media[0]){
   
   return productImages?.media[0]?.URLs;

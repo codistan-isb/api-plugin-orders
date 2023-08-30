@@ -17,11 +17,19 @@ export default async function uploadedBy(parent, connectionArgs, context, info) 
   
   const sellerInfo= await Accounts.findOne({"_id":parent.sellerId});
   if(sellerInfo){
+    let phoneNumber=sellerInfo?.billing?.phone?sellerInfo?.billing?.phone:sellerInfo?.profile?.phone?sellerInfo?.profile?.phone:sellerInfo?.phone?sellerInfo?.phone:"NA";
+    let address1=sellerInfo?.billing?.address?sellerInfo?.storeAddress?.address1:"---";
+    let {city,address2,postalcode}=sellerInfo?.billing?sellerInfo?.billing:sellerInfo?.storeAddress;
+     if(!address1){address1=""}
+     if(!address2){address2=""}
+     if(!phoneNumber){phoneNumber=""}
+     if(!city){city=""}
+     if(!postalcode){postalcode=""}
   const response = {
     storeName:sellerInfo?.storeName,
     name:sellerInfo?.profile?.name,
     email:sellerInfo?.emails[0]?.address,
-    billingAddress:{...sellerInfo?.billing,address1:sellerInfo?.billing?.address}
+    billingAddress:{city,address2,postalcode,address1,phone:phoneNumber}
     }
   return response;}
   else {
