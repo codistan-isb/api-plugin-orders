@@ -1,12 +1,73 @@
 import SimpleSchema from "simpl-schema";
 
-const withoutCodeCountries = ["AO", "AG", "AW", "BS", "BZ", "BJ", "BW",
-  "BF", "BI", "CM", "CF", "KM", "CG", "CD", "CK", "CI", "DJ",
-  "DM", "GQ", "ER", "FJ", "TF", "GM", "GH", "GD", "GN", "GY",
-  "HK", "IE", "JM", "KE", "KI", "MO", "MW", "ML", "MR", "MU",
-  "MS", "NR", "AN", "NU", "KP", "PA", "QA", "RW", "KN", "LC",
-  "ST", "SA", "SC", "SL", "SB", "SO", "SR", "SY", "TZ", "TL",
-  "TK", "TO", "TT", "TV", "UG", "AE", "VU", "YE", "ZW"];
+const withoutCodeCountries = [
+  "AO",
+  "AG",
+  "AW",
+  "BS",
+  "BZ",
+  "BJ",
+  "BW",
+  "BF",
+  "BI",
+  "CM",
+  "CF",
+  "KM",
+  "CG",
+  "CD",
+  "CK",
+  "CI",
+  "DJ",
+  "DM",
+  "GQ",
+  "ER",
+  "FJ",
+  "TF",
+  "GM",
+  "GH",
+  "GD",
+  "GN",
+  "GY",
+  "HK",
+  "IE",
+  "JM",
+  "KE",
+  "KI",
+  "MO",
+  "MW",
+  "ML",
+  "MR",
+  "MU",
+  "MS",
+  "NR",
+  "AN",
+  "NU",
+  "KP",
+  "PA",
+  "QA",
+  "RW",
+  "KN",
+  "LC",
+  "ST",
+  "SA",
+  "SC",
+  "SL",
+  "SB",
+  "SO",
+  "SR",
+  "SY",
+  "TZ",
+  "TL",
+  "TK",
+  "TO",
+  "TT",
+  "TV",
+  "UG",
+  "AE",
+  "VU",
+  "YE",
+  "ZW",
+];
 
 /**
  * @name Metafield
@@ -23,29 +84,29 @@ const Metafield = new SimpleSchema({
   key: {
     type: String,
     max: 30,
-    optional: true
+    optional: true,
   },
   namespace: {
     type: String,
     max: 20,
-    optional: true
+    optional: true,
   },
   scope: {
     type: String,
-    optional: true
+    optional: true,
   },
   value: {
     type: String,
-    optional: true
+    optional: true,
   },
   valueType: {
     type: String,
-    optional: true
+    optional: true,
   },
   description: {
     type: String,
-    optional: true
-  }
+    optional: true,
+  },
 });
 
 /**
@@ -71,51 +132,51 @@ const Metafield = new SimpleSchema({
  * @property {Metafield[]} metafields
  */
 export const OrderAddress = new SimpleSchema({
-  "_id": {
+  _id: {
     type: String,
-    optional: true
+    optional: true,
   },
-  "fullName": {
+  fullName: {
     type: String,
-    label: "Full name"
+    label: "Full name",
   },
-  "firstName": {
+  firstName: {
     type: String,
     label: "First name",
-    optional: true
+    optional: true,
   },
-  "lastName": {
+  lastName: {
     type: String,
     label: "Last name",
-    optional: true
+    optional: true,
   },
-  "address1": {
+  address1: {
     label: "Address 1",
-    type: String
+    type: String,
   },
-  "address2": {
+  address2: {
     label: "Address 2",
     type: String,
-    optional: true
+    optional: true,
   },
-  "city": {
+  city: {
     type: String,
-    label: "City"
+    label: "City",
   },
-  "company": {
+  company: {
     type: String,
     label: "Company",
-    optional: true
+    optional: true,
   },
-  "phone": {
+  phone: {
     type: String,
-    label: "Phone"
+    label: "Phone",
   },
-  "region": {
+  region: {
     label: "State/Province/Region",
-    type: String
+    type: String,
   },
-  "postal": {
+  postal: {
     label: "ZIP/Postal Code",
     type: String,
     optional: true,
@@ -127,42 +188,42 @@ export const OrderAddress = new SimpleSchema({
         }
       }
       return true;
-    }
+    },
   },
-  "country": {
+  country: {
     type: String,
-    label: "Country"
+    label: "Country",
   },
-  "isCommercial": {
+  isCommercial: {
     label: "This is a commercial address.",
     type: Boolean,
-    defaultValue: false
+    defaultValue: false,
   },
-  "isBillingDefault": {
+  isBillingDefault: {
     label: "Make this your default billing address?",
     type: Boolean,
     defaultValue: false,
-    optional: true
+    optional: true,
   },
-  "isShippingDefault": {
+  isShippingDefault: {
     label: "Make this your default shipping address?",
     type: Boolean,
     defaultValue: false,
-    optional: true
+    optional: true,
   },
-  "failedValidation": {
+  failedValidation: {
     label: "Failed validation",
     type: Boolean,
     defaultValue: false,
-    optional: true
+    optional: true,
   },
-  "metafields": {
+  metafields: {
     type: Array,
-    optional: true
+    optional: true,
   },
   "metafields.$": {
-    type: Metafield
-  }
+    type: Metafield,
+  },
 });
 
 /**
@@ -178,32 +239,32 @@ export const OrderAddress = new SimpleSchema({
 const ShippingParcel = new SimpleSchema({
   containers: {
     type: String,
-    optional: true
+    optional: true,
   },
   length: {
     type: Number,
-    optional: true
+    optional: true,
   },
   width: {
     type: Number,
-    optional: true
+    optional: true,
   },
   height: {
     type: Number,
-    optional: true
+    optional: true,
   },
   weight: {
     type: Number,
-    optional: true
-  }
+    optional: true,
+  },
 });
 
 const Money = new SimpleSchema({
   currencyCode: String,
   amount: {
     type: Number,
-    min: 0
-  }
+    min: 0,
+  },
 });
 
 /**
@@ -217,92 +278,92 @@ export const CommonOrderItemAttribute = new SimpleSchema({
   label: String,
   value: {
     type: String,
-    optional: true
-  }
+    optional: true,
+  },
 });
 
 export const CommonOrderItem = new SimpleSchema({
-  "_id": String,
-  "attributes": {
+  _id: String,
+  attributes: {
     type: Array,
-    optional: true
+    optional: true,
   },
   "attributes.$": CommonOrderItemAttribute,
-  "isTaxable": {
+  isTaxable: {
     type: Boolean,
-    optional: true
+    optional: true,
   },
-  "parcel": {
+  parcel: {
     type: ShippingParcel,
-    optional: true
+    optional: true,
   },
-  "price": Money,
-  "productId": String,
-  "productVendor": {
+  price: Money,
+  productId: String,
+  productVendor: {
     type: String,
-    optional: true
+    optional: true,
   },
-  "quantity": {
+  quantity: {
     type: SimpleSchema.Integer,
-    min: 0
+    min: 0,
   },
-  "shopId": String,
-  "subtotal": Money,
-  "taxCode": {
+  shopId: String,
+  subtotal: Money,
+  taxCode: {
     type: String,
-    optional: true
+    optional: true,
   },
-  "title": String,
-  "variantId": String,
-  "variantTitle": {
+  title: String,
+  variantId: String,
+  variantTitle: {
     type: String,
-    optional: true
+    optional: true,
   },
-  "sellerId": {
-    type: String
-  }
+  sellerId: {
+    type: String,
+  },
 });
 
 const CommonOrderFulfillmentPrices = new SimpleSchema({
   handling: {
     type: Money,
-    optional: true
+    optional: true,
   },
   shipping: {
     type: Money,
-    optional: true
+    optional: true,
   },
   total: {
     type: Money,
-    optional: true
-  }
+    optional: true,
+  },
 });
 
 const CommonOrderTotals = new SimpleSchema({
   groupDiscountTotal: {
     type: Money,
-    optional: true
+    optional: true,
   },
   groupItemTotal: {
     type: Money,
-    optional: true
+    optional: true,
   },
   groupTotal: {
     type: Money,
-    optional: true
+    optional: true,
   },
   orderDiscountTotal: {
     type: Money,
-    optional: true
+    optional: true,
   },
   orderItemTotal: {
     type: Money,
-    optional: true
+    optional: true,
   },
   orderTotal: {
     type: Money,
-    optional: true
-  }
+    optional: true,
+  },
 });
 
 /**
@@ -318,92 +379,92 @@ const CommonOrderTotals = new SimpleSchema({
 export const CommonOrder = new SimpleSchema({
   accountId: {
     type: String,
-    optional: true
+    optional: true,
   },
   billingAddress: {
     type: OrderAddress,
-    optional: true
+    optional: true,
   },
   cartId: {
     type: String,
-    optional: true
+    optional: true,
   },
   currencyCode: String,
   fulfillmentMethodId: {
     type: String,
-    optional: true
+    optional: true,
   },
   fulfillmentPrices: CommonOrderFulfillmentPrices,
   fulfillmentType: {
     type: String,
-    allowedValues: ["shipping"]
+    allowedValues: ["shipping"],
   },
   items: [CommonOrderItem],
   orderId: {
     type: String,
-    optional: true
+    optional: true,
   },
   internalOrderId: {
     type: String,
-    optional: true
+    optional: true,
   },
-  
+
   originAddress: {
     type: OrderAddress,
-    optional: true
+    optional: true,
   },
   shippingAddress: {
     type: OrderAddress,
-    optional: true
+    optional: true,
   },
   shopId: String,
   sourceType: {
     type: String,
-    allowedValues: ["cart", "order"]
+    allowedValues: ["cart", "order"],
   },
   totals: {
     type: CommonOrderTotals,
-    optional: true
-  }
+    optional: true,
+  },
 });
 
 export const orderItemInputSchema = new SimpleSchema({
-  "addedAt": {
+  addedAt: {
     type: Date,
-    optional: true
+    optional: true,
   },
-  
-  "price": Number,
-  "productConfiguration": Object,
+
+  price: Number,
+  productConfiguration: Object,
   "productConfiguration.productId": String,
   "productConfiguration.productVariantId": String,
-  "quantity": {
+  quantity: {
     type: SimpleSchema.Integer,
-    min: 1
-  }
+    min: 1,
+  },
 });
 
 export const orderFulfillmentGroupInputSchema = new SimpleSchema({
-  "data": {
+  data: {
     type: Object,
     blackbox: true,
-    optional: true
+    optional: true,
   },
-  "items": {
+  items: {
     type: Array,
-    minCount: 1
+    minCount: 1,
   },
   "items.$": orderItemInputSchema,
-  "selectedFulfillmentMethodId": String,
-  "shopId": String,
-  "totalPrice": {
+  selectedFulfillmentMethodId: String,
+  shopId: String,
+  totalPrice: {
     type: Number,
-    optional: true
+    optional: true,
   },
-  "type": {
+  type: {
     type: String,
-    allowedValues: ["shipping"]
-  }
+    allowedValues: ["shipping"],
+  },
 });
 
 // Exported for unit tests
@@ -411,37 +472,37 @@ export const orderInputSchema = new SimpleSchema({
   // Although billing address is typically needed only by the payment plugin,
   // some tax services require it to calculate taxes for digital items. Thus
   // it should be provided here in order to be added to the CommonOrder if possible.
-  "billingAddress": {
+  billingAddress: {
     type: OrderAddress,
-    optional: true
+    optional: true,
   },
-  "cartId": {
+  cartId: {
     type: String,
-    optional: true
+    optional: true,
   },
-  "currencyCode": String,
+  currencyCode: String,
   /**
    * If you need to store customFields, be sure to add them to your
    * GraphQL input schema and your Order SimpleSchema with proper typing.
    * This schema need not care what `customFields` is because the input
    * and Order schemas will validate. Thus, we use blackbox here.
    */
-  "customFields": {
+  customFields: {
     type: Object,
     blackbox: true,
-    optional: true
+    optional: true,
   },
-  "email": String,
-  "fulfillmentGroups": {
+  email: String,
+  fulfillmentGroups: {
     type: Array,
-    minCount: 1
+    minCount: 1,
   },
   "fulfillmentGroups.$": orderFulfillmentGroupInputSchema,
-  "ordererPreferredLanguage": {
+  ordererPreferredLanguage: {
     type: String,
-    optional: true
+    optional: true,
   },
-  "shopId": String
+  shopId: String,
 });
 
 export const paymentInputSchema = new SimpleSchema({
@@ -449,14 +510,14 @@ export const paymentInputSchema = new SimpleSchema({
   // Optionally override the order.billingAddress for each payment
   billingAddress: {
     type: OrderAddress,
-    optional: true
+    optional: true,
   },
   data: {
     type: Object,
     optional: true,
-    blackbox: true
+    blackbox: true,
   },
-  method: String
+  method: String,
 });
 
 /**
@@ -468,7 +529,7 @@ export const paymentInputSchema = new SimpleSchema({
  */
 const AnonymousAccessToken = new SimpleSchema({
   createdAt: Date,
-  hashedToken: String
+  hashedToken: String,
 });
 
 /**
@@ -478,15 +539,6 @@ const AnonymousAccessToken = new SimpleSchema({
  * @property {String} docId required
  * @property {String} docType optional
  */
-const Document = new SimpleSchema({
-  docId: {
-    type: String
-  },
-  docType: {
-    type: String,
-    optional: true
-  }
-});
 
 /**
  * @name ExportHistory
@@ -501,21 +553,21 @@ const Document = new SimpleSchema({
 const ExportHistory = new SimpleSchema({
   status: {
     type: String,
-    allowedValues: ["success", "failure"]
+    allowedValues: ["success", "failure"],
   },
   dateAttempted: {
-    type: Date
+    type: Date,
   },
   exportMethod: {
-    type: String
+    type: String,
   },
   destinationIdentifier: {
     type: String,
-    optional: true
+    optional: true,
   },
   shopId: {
-    type: String
-  }
+    type: String,
+  },
 });
 
 /**
@@ -529,17 +581,17 @@ const ExportHistory = new SimpleSchema({
  */
 const History = new SimpleSchema({
   event: {
-    type: String
+    type: String,
   },
   value: {
-    type: String
+    type: String,
   },
   userId: {
-    type: String
+    type: String,
   },
   updatedAt: {
-    type: Date
-  }
+    type: Date,
+  },
 });
 
 /**
@@ -559,36 +611,36 @@ export const OrderInvoice = new SimpleSchema({
   currencyCode: String,
   discounts: {
     type: Number,
-    min: 0
+    min: 0,
   },
   effectiveTaxRate: {
     type: Number,
-    min: 0
+    min: 0,
   },
   shipping: {
     type: Number,
-    min: 0
+    min: 0,
   },
   subtotal: {
     type: Number,
-    min: 0
+    min: 0,
   },
   surcharges: {
     type: Number,
-    min: 0
+    min: 0,
   },
   taxes: {
     type: Number,
-    min: 0
+    min: 0,
   },
   taxableAmount: {
     type: Number,
-    min: 0
+    min: 0,
   },
   total: {
     type: Number,
-    min: 0
-  }
+    min: 0,
+  },
 });
 
 /**
@@ -601,14 +653,14 @@ export const OrderInvoice = new SimpleSchema({
  */
 const Notes = new SimpleSchema({
   content: {
-    type: String
+    type: String,
   },
   userId: {
-    type: String
+    type: String,
   },
   updatedAt: {
-    type: Date
-  }
+    type: Date,
+  },
 });
 
 /**
@@ -621,15 +673,15 @@ const Notes = new SimpleSchema({
  * @property {String[]} workflow optional
  */
 const Workflow = new SimpleSchema({
-  "status": {
+  status: {
     type: String,
-    defaultValue: "new"
+    defaultValue: "new",
   },
-  "workflow": {
+  workflow: {
     type: Array,
-    optional: true
+    optional: true,
   },
-  "workflow.$": String
+  "workflow.$": String,
 });
 
 /**
@@ -641,9 +693,25 @@ const Workflow = new SimpleSchema({
  */
 const OrderDiscount = new SimpleSchema({
   amount: Number,
-  discountId: String
+  discountId: String,
+  code: {
+    type: String,
+    optional: true,
+  },
+  discount: {
+    type: Number,
+    optional: true,
+  },
 });
-
+const Document = new SimpleSchema({
+  docId: {
+    type: String,
+  },
+  docType: {
+    type: String,
+    optional: true,
+  },
+});
 /**
  * @name OrderItemAttribute
  * @memberof Schemas
@@ -655,8 +723,8 @@ const OrderItemAttribute = new SimpleSchema({
   label: String,
   value: {
     type: String,
-    optional: true
-  }
+    optional: true,
+  },
 });
 
 /**
@@ -689,85 +757,85 @@ const OrderItemAttribute = new SimpleSchema({
  *
  */
 export const OrderItem = new SimpleSchema({
-  "_id": String,
-  "addedAt": Date,
-  "attributes": {
+  _id: String,
+  addedAt: Date,
+  attributes: {
     type: Array,
-    optional: true
+    optional: true,
   },
   "attributes.$": OrderItemAttribute,
-  "sellerId":{type:String,optional:true},
-  "cancelReason": {
+  sellerId: { type: String, optional: true },
+  cancelReason: {
     type: String,
-    optional: true
+    optional: true,
   },
-  "createdAt": Date,
-  "documents": {
+  createdAt: Date,
+  documents: {
     type: Array,
-    optional: true
+    optional: true,
   },
   "documents.$": {
-    type: Document
+    type: Document,
   },
-  "history": {
+  history: {
     type: Array,
-    optional: true
+    optional: true,
   },
   "history.$": {
-    type: History
+    type: History,
   },
-  "optionTitle": {
+  optionTitle: {
     type: String,
-    optional: true
+    optional: true,
   },
-  "parcel": {
+  parcel: {
     type: ShippingParcel,
-    optional: true
+    optional: true,
   },
-  "price": Money,
-  "productId": String,
-  "productSlug": {
+  price: Money,
+  productId: String,
+  productSlug: {
     type: String,
-    optional: true
+    optional: true,
   },
-  "productType": {
+  productType: {
     label: "Product Type",
     type: String,
-    optional: true
+    optional: true,
   },
-  "productTagIds": {
+  productTagIds: {
     label: "Product Tags",
     type: Array,
-    optional: true
+    optional: true,
   },
   "productTagIds.$": String,
-  "productVendor": {
+  productVendor: {
     label: "Product Vendor",
     type: String,
-    optional: true
+    optional: true,
   },
-  "quantity": {
+  quantity: {
     label: "Quantity",
     type: SimpleSchema.Integer,
-    min: 0
+    min: 0,
   },
-  "shopId": String,
-  "subtotal": Number,
-  "title": String,
-  "updatedAt": Date,
-  "variantId": {
+  shopId: String,
+  subtotal: Number,
+  title: String,
+  updatedAt: Date,
+  variantId: {
     type: String,
-    optional: true
+    optional: true,
   },
-  "variantTitle": {
+  variantTitle: {
     type: String,
-    optional: true
+    optional: true,
   },
-  "workflow": {
+  workflow: {
     type: Workflow,
     optional: true,
-    defaultValue: {}
-  }
+    defaultValue: {},
+  },
 });
 
 /**
@@ -787,23 +855,23 @@ const SelectedFulfillmentOption = new SimpleSchema({
   _id: String,
   carrier: {
     type: String,
-    optional: true
+    optional: true,
   },
   currencyCode: String,
   group: {
     type: String,
-    optional: true
+    optional: true,
   },
   handling: {
     type: Number,
-    min: 0
+    min: 0,
   },
   label: String,
   name: String,
   rate: {
     type: Number,
-    min: 0
-  }
+    min: 0,
+  },
 });
 
 /**
@@ -828,49 +896,49 @@ const SelectedFulfillmentOption = new SimpleSchema({
  * @property {Object} workflow Current status and past statuses for this fulfillment
  */
 export const OrderFulfillmentGroup = new SimpleSchema({
-  "_id": String,
-  "address": {
+  _id: String,
+  address: {
     type: OrderAddress,
-    optional: true
+    optional: true,
   },
-  "customsLabelUrl": {
+  customsLabelUrl: {
     type: String,
-    optional: true
+    optional: true,
   },
-  "invoice": OrderInvoice,
-  "items": {
+  invoice: OrderInvoice,
+  items: {
     type: Array,
-    minCount: 1
+    minCount: 1,
   },
   "items.$": OrderItem,
-  "itemIds": [String],
-  "shipmentMethod": SelectedFulfillmentOption,
-  "shippingLabelUrl": {
+  itemIds: [String],
+  shipmentMethod: SelectedFulfillmentOption,
+  shippingLabelUrl: {
     type: String,
-    optional: true
+    optional: true,
   },
-  "shopId": String,
-  "totalItemQuantity": {
+  shopId: String,
+  totalItemQuantity: {
     type: SimpleSchema.Integer,
-    min: 1
+    min: 1,
   },
-  "tracking": {
+  tracking: {
     type: String,
-    optional: true
+    optional: true,
   },
-  "trackingUrl": {
+  trackingUrl: {
     type: String,
-    optional: true
+    optional: true,
   },
-  "type": {
+  type: {
     type: String,
-    allowedValues: ["shipping"]
+    allowedValues: ["shipping"],
   },
-  "updatedAt": {
+  updatedAt: {
     type: Date,
-    optional: true
+    optional: true,
   },
-  "workflow": Workflow
+  workflow: Workflow,
 });
 
 /**
@@ -887,25 +955,24 @@ export const OrderFulfillmentGroup = new SimpleSchema({
 const OrderTransaction = new SimpleSchema({
   itemId: {
     type: String,
-    optional: true
+    optional: true,
   },
   paymentId: {
     type: String,
-    optional: true
+    optional: true,
   },
   shipmentId: {
     type: String,
-    optional: true
+    optional: true,
   },
   inventoryId: {
     type: String,
-    optional: true
+    optional: true,
   },
   createdAt: {
-    type: Date
-  }
+    type: Date,
+  },
 });
-
 
 /**
  * @name CurrencyExchangeRate
@@ -918,12 +985,12 @@ const CurrencyExchangeRate = new SimpleSchema({
   userCurrency: {
     type: String,
     optional: true,
-    defaultValue: "USD"
+    defaultValue: "USD",
   },
   exchangeRate: {
     type: Number,
-    optional: true
-  }
+    optional: true,
+  },
 });
 
 /**
@@ -941,58 +1008,58 @@ const CurrencyExchangeRate = new SimpleSchema({
  * @property {String} shopId The ID of the shop that is being paid.
  */
 export const Payment = new SimpleSchema({
-  "_id": {
+  _id: {
     type: String,
-    label: "Payment Id"
+    label: "Payment Id",
   },
-  "address": {
+  address: {
     type: OrderAddress,
-    optional: true
+    optional: true,
   },
-  "amount": Number,
-  "captureErrorCode": {
+  amount: Number,
+  captureErrorCode: {
     type: String,
-    optional: true
+    optional: true,
   },
-  "captureErrorMessage": {
+  captureErrorMessage: {
     type: String,
-    optional: true
+    optional: true,
   },
-  "cardBrand": {
+  cardBrand: {
     type: String,
-    optional: true
+    optional: true,
   },
-  "createdAt": Date,
-  "currency": {
+  createdAt: Date,
+  currency: {
     type: CurrencyExchangeRate,
-    optional: true
+    optional: true,
   },
-  "currencyCode": String,
-  "data": {
+  currencyCode: String,
+  data: {
     type: Object,
     optional: true,
-    blackbox: true
+    blackbox: true,
   },
-  "displayName": String,
-  "method": String,
-  "mode": String,
-  "name": String,
-  "paymentPluginName": String,
-  "processor": String,
-  "riskLevel": {
+  displayName: String,
+  method: String,
+  mode: String,
+  name: String,
+  paymentPluginName: String,
+  processor: String,
+  riskLevel: {
     type: String,
-    optional: true
+    optional: true,
   },
-  "shopId": String,
-  "status": String,
-  "transactionId": String,
-  "transactions": {
-    type: Array
+  shopId: String,
+  status: String,
+  transactionId: String,
+  transactions: {
+    type: Array,
   },
   "transactions.$": {
     type: Object,
-    blackbox: true
-  }
+    blackbox: true,
+  },
 });
 
 /**
@@ -1024,112 +1091,112 @@ export const Payment = new SimpleSchema({
  * @property {Workflow} workflow optional
  */
 export const Order = new SimpleSchema({
-  "_id": {
+  _id: {
     type: String,
-    optional: true
+    optional: true,
   },
-  "accountId": {
+  accountId: {
     type: String,
-    optional: true
+    optional: true,
   },
-  
-  "anonymousAccessTokens": {
+
+  anonymousAccessTokens: {
     type: Array,
-    optional: true
+    optional: true,
   },
   "anonymousAccessTokens.$": AnonymousAccessToken,
   // Although billing address is typically needed only by the payment plugin,
   // some tax services require it to calculate taxes for digital items. Thus
   // it should be provided here in order to be added to the CommonOrder if possible.
-  "billingAddress": {
+  billingAddress: {
     type: OrderAddress,
-    optional: true
+    optional: true,
   },
-  "cartId": {
+  cartId: {
     type: String,
-    optional: true
+    optional: true,
   },
   internalOrderId: {
     type: Number,
-    optional: true
+    optional: true,
   },
-  "createdAt": Date,
-  "currencyCode": String,
-  "customFields": {
+  createdAt: Date,
+  currencyCode: String,
+  customFields: {
     type: Object,
     blackbox: true,
-    optional: true
+    optional: true,
   },
-  "discounts": {
+  discounts: {
     type: Array,
-    optional: true
+    optional: true,
   },
   "discounts.$": OrderDiscount,
-  "documents": {
+  documents: {
     type: Array,
-    optional: true
+    optional: true,
   },
   "documents.$": Document,
-  "email": {
+  email: {
     type: String,
     optional: true,
-    regEx: SimpleSchema.RegEx.Email
+    regEx: SimpleSchema.RegEx.Email,
   },
-  "exportHistory": {
+  exportHistory: {
     type: Array,
-    optional: true
+    optional: true,
   },
   "exportHistory.$": ExportHistory,
-  "history": {
+  history: {
     type: Array,
-    optional: true
+    optional: true,
   },
   "history.$": History,
-  "notes": {
+  notes: {
     type: Array,
-    optional: true
+    optional: true,
   },
   "notes.$": Notes,
-  "ordererPreferredLanguage": {
+  ordererPreferredLanguage: {
     type: String,
-    optional: true
+    optional: true,
   },
-  "payments": {
+  payments: {
     type: Array,
-    optional: true
+    optional: true,
   },
   "payments.$": Payment,
-  "referenceId": {
-    type: String
+  referenceId: {
+    type: String,
   },
-  "shipping": [OrderFulfillmentGroup],
-  "shopId": String,
-  "surcharges": {
+  shipping: [OrderFulfillmentGroup],
+  shopId: String,
+  surcharges: {
     type: Array,
-    optional: true
+    optional: true,
   },
   "surcharges.$": {
     type: Object,
-    blackbox: true
+    blackbox: true,
   },
-  "totalItemQuantity": {
+  totalItemQuantity: {
     type: SimpleSchema.Integer,
-    min: 1
+    min: 1,
   },
-  "transactions": {
+  transactions: {
     type: Array,
-    optional: true
+    optional: true,
   },
   "transactions.$": OrderTransaction,
-  "updatedAt": {
+  updatedAt: {
     type: Date,
-    optional: true
+    optional: true,
   },
-  "workflow": {
+  workflow: {
     type: Workflow,
     optional: true,
-    defaultValue: {}
-  }
+    defaultValue: {},
+  },
 });
 
 /**
@@ -1142,7 +1209,7 @@ export function extendOrdersSchemas(schemas) {
     orderStatusLabels: {
       type: Object,
       blackbox: true,
-      optional: true
-    }
+      optional: true,
+    },
   });
 }
