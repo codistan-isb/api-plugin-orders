@@ -699,7 +699,7 @@ const OrderDiscount = new SimpleSchema({
     optional: true,
   },
   discountAmount: {
-    type: Number,
+    type: String,
     optional: true,
   },
 });
