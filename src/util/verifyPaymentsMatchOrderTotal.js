@@ -16,12 +16,12 @@ export default function verifyPaymentsMatchOrderTotal(paymentsInput, orderTotal)
   // In order to prevent mismatch due to rounding, we convert these to strings before comparing. What we really
   // care about is, do these match to the specificity that the shopper will see (i.e. to the scale of the currency)?
   // No currencies have greater than 3 decimal places, so we'll use 3.
-  const paymentTotalString = accounting.toFixed(paymentTotal, 3);
-  const orderTotalString = accounting.toFixed(orderTotal, 3);
+  const paymentTotalString = Math.round(accounting.toFixed(paymentTotal, 3));
+  const orderTotalString = Math.round(accounting.toFixed(orderTotal, 3));
 
   if (paymentTotalString !== orderTotalString) {
     Logger.debug("Error creating payments for a new order. " +
       `Order total (${orderTotalString}) does not match total of all payment amounts (${paymentTotalString}).`);
-    throw new ReactionError("payment-failed", "Total of all payments must equal order total");
+    throw new ReactionError("payment-failed", ` Total of all payments must equal order total is (${orderTotalString}) all payment amounts (${paymentTotalString})`);
   }
 }

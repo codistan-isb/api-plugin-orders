@@ -41,26 +41,37 @@ export default function addInvoiceToGroup({
   console.log("group discount total", groupDiscountTotal);
   console.log("item total is ", itemTotal);
 
-  let newDiscount = 0;
+  // let newDiscount = 0;
+  // no need now
+  // if (groupDiscountTotal !== 0) {
+  //   console.log("coming to condition");
+  //   newDiscount = itemTotal - groupDiscountTotal;
+  // }
 
-  if (groupDiscountTotal !== 0) {
-    console.log("coming to condition");
-    newDiscount = itemTotal - groupDiscountTotal;
-  }
+  // let total = +accounting.toFixed(
+  //   Math.max(
+  //     0,
+  //     itemTotal +
+  //       fulfillmentTotal +
+  //       taxTotal +
+  //       groupSurchargeTotal -
+  //       newDiscount
+  //   ),
+  //   3
+  // );
 
-  let total = +accounting.toFixed(
+  const total = +Math.round(accounting.toFixed(
     Math.max(
       0,
       itemTotal +
-        fulfillmentTotal +
-        taxTotal +
-        groupSurchargeTotal -
-        newDiscount
+      fulfillmentTotal +
+      taxTotal +
+      groupSurchargeTotal -
+      groupDiscountTotal
     ),
     3
-  );
-
-  console.log("newDiscount", newDiscount);
+  ));
+  // console.log("newDiscount", newDiscount);
 
   console.log("total is ", total);
 
