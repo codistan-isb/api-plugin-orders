@@ -337,14 +337,14 @@ export default async function placeOrder(context, input) {
   } else {
     order.customFields = customFieldsFromClient;
   }
-  // createChildOrders(context, order);
+  createChildOrders(context, order);
   // Validate and save
   OrderSchema.validate(order);
-  // await Orders.insertOne(order);
-  // await Shops.updateOne({_id:shop._id},{
-  //   $set:{lastOrderId:newOrderId}
-  // });
-  // await appEvents.emit("afterOrderCreate", { createdBy: userId, order });
+  await Orders.insertOne(order);
+  await Shops.updateOne({_id:shop._id},{
+    $set:{lastOrderId:newOrderId}
+  });
+  await appEvents.emit("afterOrderCreate", { createdBy: userId, order });
 
   return {
     orders: [order],
