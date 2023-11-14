@@ -60,7 +60,7 @@ export default function addInvoiceToGroup({
   //   3
   // );
 
-  const total = +Math.round(accounting.toFixed(
+  const total = +(accounting.toFixed(
     Math.max(
       0,
       itemTotal +
