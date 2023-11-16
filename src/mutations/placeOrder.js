@@ -105,8 +105,8 @@ async function createPayments({
   return payments;
 }
 async function createChildOrders(context, order) {
-  
-  const {  collections } = context;
+
+  const { collections } = context;
   const { Orders, Cart } = collections;
   const parentFulfillmentGroup = order?.shipping?.[0]
 
@@ -125,8 +125,8 @@ async function createChildOrders(context, order) {
     }
   })
   Object.keys(sellerOrders).map(async (key) => {
-    
-    
+
+
     const childItem = sellerOrders[key];
     const itemTotal = +accounting.toFixed(childItem.reduce((sum, item) => (sum + item.subtotal), 0), 3);
 
@@ -134,33 +134,33 @@ async function createChildOrders(context, order) {
     const shippingTotal = parentFulfillmentGroup.shipmentMethod.rate || 0;
     const handlingTotal = parentFulfillmentGroup.shipmentMethod.handling || 0;
     const fulfillmentTotal = shippingTotal + handlingTotal;
-  
+
     // Totals
     // To avoid rounding errors, be sure to keep this calculation the same between here and
     // `buildOrderInputFromCart.js` in the client code.
     const total = +accounting.toFixed(Math.max(0, itemTotal + fulfillmentTotal), 3);
-  
-    const childInvoice={...parentFulfillmentGroup.invoice,subtotal:itemTotal,total}
+
+    const childInvoice = { ...parentFulfillmentGroup.invoice, subtotal: itemTotal, total }
     let fulfillmentObj = {
       ...parentFulfillmentGroup,
       _id: Random.id(),
       items: childItem,
       itemIds: childItem.map(item => item._id),
-      totalItemQuantity:childItem.reduce((sum, item) => sum + item.quantity, 0),
-      invoice:childInvoice
+      totalItemQuantity: childItem.reduce((sum, item) => sum + item.quantity, 0),
+      invoice: childInvoice
 
     }
-    const childFulfillmentGroup=[fulfillmentObj]
-    const childOrder={
+    const childFulfillmentGroup = [fulfillmentObj]
+    const childOrder = {
       ...order,
       _id: Random.id(),
-      referenceId:Random.id(),
-      shipping:childFulfillmentGroup,
+      referenceId: Random.id(),
+      shipping: childFulfillmentGroup,
       totalItemQuantity: childFulfillmentGroup.reduce((sum, group) => sum + group.totalItemQuantity, 0),
 
     }
     OrderSchema.validate(childOrder);
-    await Orders.insertOne({...childOrder,parentId:order._id});
+    // await Orders.insertOne({ ...childOrder, parentId: order._id });
 
   })
 
@@ -188,11 +188,11 @@ export default async function placeOrder(context, input) {
     shopId
   } = orderInput;
   const { accountId, appEvents, collections, getFunctionsOfType, userId } = context;
-  const { Orders, Cart , Shops } = collections;
+  const { Orders, Cart, Shops } = collections;
 
   const shop = await context.queries.shopById(context, shopId);
   if (!shop) throw new ReactionError("not-found", "Shop not found");
-  let newOrderId=shop?.lastOrderId? parseInt(shop?.lastOrderId)+1:1;
+  let newOrderId = shop?.lastOrderId ? parseInt(shop?.lastOrderId) + 1 : 1;
   if (!userId && !shop.allowGuestCheckout) {
     throw new ReactionError("access-denied", "Guest checkout not allowed");
   }
@@ -307,7 +307,8 @@ export default async function placeOrder(context, input) {
     // if the cart has a reference Id, and no custom function is created use that
     if (_.get(cart, "referenceId")) { // we want the else to fallthrough if no cart to keep the if/else logic simple
       ({ referenceId } = cart);
-    } else {
+    }
+    else {
       referenceId = Random.id();
     }
   } else {
@@ -321,7 +322,7 @@ export default async function placeOrder(context, input) {
   }
 
   order.referenceId = newOrderId.toString();
-  order.internalOrderId=newOrderId;
+  order.internalOrderId = newOrderId;
   // Apply custom order data transformations from plugins
   const transformCustomOrderFieldsFuncs = getFunctionsOfType("transformCustomOrderFields");
   if (transformCustomOrderFieldsFuncs.length > 0) {
@@ -337,12 +338,13 @@ export default async function placeOrder(context, input) {
   } else {
     order.customFields = customFieldsFromClient;
   }
+  console.log("order object  before insertion to database :- ", order);
   createChildOrders(context, order);
   // Validate and save
   OrderSchema.validate(order);
   await Orders.insertOne(order);
-  await Shops.updateOne({_id:shop._id},{
-    $set:{lastOrderId:newOrderId}
+  await Shops.updateOne({ _id: shop._id }, {
+    $set: { lastOrderId: newOrderId }
   });
   await appEvents.emit("afterOrderCreate", { createdBy: userId, order });
 
