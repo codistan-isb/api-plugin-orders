@@ -38,7 +38,7 @@ export default async function updateOrderFulfillmentGroup(context, input) {
 
   const { appEvents, collections, userId } = context;
   const { Orders } = collections;
-
+  console.log("status", status.split("\\ coreOrderWorkflow/created"));
   // First verify that this order actually exists
   const order = await Orders.findOne({ _id: orderId });
   if (!order) throw new ReactionError("not-found", "Order not found");
@@ -66,6 +66,7 @@ export default async function updateOrderFulfillmentGroup(context, input) {
 
   if (status && orderFulfillmentGroup.workflow.status !== status) {
     modifier.$set["shipping.$[group].workflow.status"] = status;
+    modifier.$set["workflow.status"] = status;
     modifier.$push = {
       "shipping.$[group].workflow.workflow": status
     };

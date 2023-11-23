@@ -1,14 +1,13 @@
 input getOrderShippingByAddressInput {
- address:String!
-      city:String!
-      zipCode:String
-      amount:Int!
+  address: String!
+  city: String!
+  zipCode: String
+  amount: Int!
 }
 extend type Query {
-
   getOrderShippingByAddress(
-    input:getOrderShippingByAddressInput
-  ):FlatRateFulfillmentMethod
+    input: getOrderShippingByAddressInput
+  ): FlatRateFulfillmentMethod
 
   "Get an order by its ID"
   orderById(
@@ -368,16 +367,15 @@ type OrderSummary {
 }
 
 extend type uploadedBy {
-billingAddress:Address 
-email:String
+  billingAddress: Address
+  email: String
 }
 """
 A single item in an order. The item contains information about a purchase.
 """
 type OrderItem implements Node {
-
   "Seller Info"
-  uploadedBy :uploadedBy
+  uploadedBy: uploadedBy
 
   "The order item ID"
   _id: ID!
@@ -560,14 +558,14 @@ type OrderFulfillmentGroup implements Node {
 
 "An order"
 type Order implements Node {
-  parentOrder:ID
-  
-  sellerInfo:uploadedBy
+  parentOrder: ID
+
+  sellerInfo: uploadedBy
 
   "The Order ID"
   _id: ID!
 
-  internalOrderId:String
+  internalOrderId: String
 
   "The account that placed the order. Some orders are created for anonymous users. Anonymous orders have a null account."
   account: Account
@@ -824,8 +822,7 @@ input AddOrderFulfillmentGroupInput {
 
 "Input for the updateOrderItem mutation"
 input UpdateOrderItemInput {
-  
-  status: String
+  status: subOrderStatus
 
   "An optional string identifying the mutation call, which will be returned in the response payload"
   clientMutationId: String
@@ -842,7 +839,34 @@ input UpdateOrderItemInput {
   """
   reason: String
 }
-
+enum subOrderStatus {
+  New
+  Confirmed
+  Out_Of_Stock
+  Quality_Issue
+  Pickup_Generation
+  Arrived_At_Office
+  Office_Stock
+  Dispatched
+  RTS_Quality_Issue
+  RTS_Cancelled
+  RTS_Returned
+  Dispatched_On_Penta
+  Dispatched_On_Rider
+  Dispatched_On_Leopard
+  Dispatched_On_Swyft
+  Dispatched_On_Deawoo
+  Return_In_Process
+  Delivered
+  Payment_Released
+  ReShared
+  On_Hold
+  Consignee_Not_Responding
+  Seller_Not_Responding
+  Refunded
+  Exchanged
+  Customer_Feedback_Done
+}
 
 "Input for the cancelOrderItem mutation"
 input CancelOrderItemInput {
@@ -960,13 +984,33 @@ input UpdateOrderFulfillmentGroupInput {
   orderId: ID!
 
   "Set the current order fulfillment group status to this"
-  status: String
+  status: mainOrderStatus
 
   "Set this as the current order fulfillment group shipment tracking reference"
   tracking: String
 
   "Set this as the current order fulfillment group shipment tracking URL"
   trackingUrl: String
+}
+enum mainOrderStatus {
+  New
+  Cancelled
+  Confirmed
+  Out_Of_Stock
+  Quality_Issue
+  Dispatched
+  Dispatched_On_Penta
+  Dispatched_On_Rider
+  Dispatched_On_
+  Leopard
+  Dispatched_On_Swyft
+  Dispatched_On_Deawoo
+  Return_In_Process
+  Delivered
+  Completed
+  On_Hold
+  Consignee_Not_Responding
+  Customer_Feedback_Done
 }
 
 "Response payload for the addOrderFulfillmentGroup mutation"
@@ -989,7 +1033,6 @@ type UpdateOrderItemPayload {
   "The updated order"
   order: Order!
 }
-
 
 "Response payload for the cancelOrderItem mutation"
 type CancelOrderItemPayload {
