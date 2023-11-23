@@ -53,13 +53,13 @@ export default async function updateOrderFulfillmentGroup(context, input) {
   // Verify that there is a group with the ID
   const orderFulfillmentGroup = order.shipping.find((group) => group._id === orderFulfillmentGroupId);
   if (!orderFulfillmentGroup) throw new ReactionError("not-found", "Order fulfillment group not found");
-
   const modifier = {
     $set: {
       "shipping.$[group].updatedAt": new Date(),
       "updatedAt": new Date()
     }
   };
+  console.log("modifier", modifier);
 
   if (tracking) modifier.$set["shipping.$[group].tracking"] = tracking;
   if (trackingUrl) modifier.$set["shipping.$[group].trackingUrl"] = trackingUrl;
@@ -87,7 +87,7 @@ export default async function updateOrderFulfillmentGroup(context, input) {
     }
   );
   if (modifiedCount === 0 || !updatedOrder) throw new ReactionError("server-error", "Unable to update order");
-
+  console.log("Here");
   await appEvents.emit("afterOrderUpdate", {
     order: updatedOrder,
     updatedBy: userId

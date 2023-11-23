@@ -174,9 +174,9 @@ export default async function updateOrderItem(context, input) {
 
   await appEvents.emit("afterOrderUpdate", {
     order: updatedOrder,
-    updatedBy: userId
+    updatedBy: userId,
   });
-  
+
   await appEvents.emit("afterOrderStatusUpdate", {
     order: updatedOrder,
     updatedBy: userId,

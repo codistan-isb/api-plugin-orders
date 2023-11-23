@@ -858,7 +858,6 @@ enum subOrderStatus {
   Dispatched_On_Deawoo
   Return_In_Process
   Delivered
-  Payment_Released
   ReShared
   On_Hold
   Consignee_Not_Responding
