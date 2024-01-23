@@ -43,11 +43,40 @@ export default async function sendOrderEmail(context, input) {
     templateName = "orders/refunded";
   } else if (action === "itemRefund") {
     templateName = "orders/itemRefund";
-  } else {
+  } 
+  else if (action === "new") 
+  {
+    templateName = "orders/new";
+  }
+  else if (action === "Confirmed")
+  {
+    templateName = "orders/Confirmed";
+  }
+  else if (action === "created") 
+  {
+    templateName = "orders/create";
+  }
+  else if (action === "Processing") 
+  {
+    templateName = "orders/Processing";
+  }
+  else if (action === "Completed") 
+  {
+    templateName = "orders/Completed";
+  }
+  else if (action === "Picked") 
+  {
+    templateName = "orders/Picked";
+  }
+  else if (action === "Packed")
+  {
+    templateName = "orders/Packed";
+  }
+  else  {
     templateName = `orders/${dataForEmail.order.workflow.status}`;
   }
-
-  await context.mutations.sendEmail(context, {
+console.log("templateName", templateName);
+  const emails = await context.mutations.sendEmail(context, {
     data: dataForEmail,
     fromShop,
     templateName,

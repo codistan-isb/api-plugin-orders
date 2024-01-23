@@ -109,6 +109,11 @@ export default function ordersStartup(context) {
       // type: "orderUpdate",
       // url: `/en/profile/address?activeProfile=seller`
     })
+    let action = order.workflow.workflow[0]
+    console.log("action", action); 
+    console.log("order in emails", order);
+    const emailSent = await sendOrderEmail(context, order, action)
+    console.log("emailSent", emailSent);
 
   });
 }
