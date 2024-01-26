@@ -122,6 +122,7 @@ extend type Query {
     "A valid anonymous access token for this order. Required if the order is not linked with an account."
     token: String
   ): [Refund]
+  buyersReferralCode: [buyersReferralCode]
 }
 
 extend type Mutation {
@@ -204,6 +205,13 @@ extend type Mutation {
   ): UpdateOrderFulfillmentGroupPayload!
 }
 
+type buyersReferralCode{
+  usedBy: ID
+  email: String
+  code: String
+  createdAt: DateTime
+ 
+}
 "Allowed values for the `OrderFulfillmentGroupItems` sortBy parameter"
 enum OrderFulfillmentGroupItemsSortByField {
   "Sort by the item ID"
