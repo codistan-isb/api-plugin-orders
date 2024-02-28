@@ -859,6 +859,7 @@ enum subOrderStatus {
   RTS_Quality_Issue
   RTS_Cancelled
   RTS_Returned
+  Completed
   Dispatched_On_Penta
   Dispatched_On_Rider
   Dispatched_On_Leopard
