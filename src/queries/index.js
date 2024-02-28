@@ -4,6 +4,7 @@ import orders from "./orders.js";
 import ordersByAccountId from "./ordersByAccountId.js";
 import refunds from "./refunds.js";
 import refundsByPaymentId from "./refundsByPaymentId.js";
+import buyersReferralCode from "./buyersReferralCode.js";
 
 export default {
   orderById,
@@ -11,5 +12,6 @@ export default {
   orders,
   ordersByAccountId,
   refunds,
-  refundsByPaymentId
+  refundsByPaymentId,
+  buyersReferralCode,
 };
