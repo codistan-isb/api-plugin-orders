@@ -4,6 +4,7 @@ input getOrderShippingByAddressInput {
   zipCode: String
   amount: Int!
 }
+
 extend type Query {
   getOrderShippingByAddress(
     input: getOrderShippingByAddressInput
@@ -135,6 +136,8 @@ extend type Mutation {
     input: AddOrderFulfillmentGroupInput!
   ): AddOrderFulfillmentGroupPayload!
 
+  addCommentToOrder(input: AddCommentInput!): Order
+
   """
   Use this mutation to update one item of an order, either for the full ordered quantity
   or for a partial quantity. If partial, the item will be split into two items and the
@@ -205,12 +208,24 @@ extend type Mutation {
   ): UpdateOrderFulfillmentGroupPayload!
 }
 
-type buyersReferralCode{
+type Comment {
+  id: ID!
+  text: String!
+  createdAt: String
+  userId: ID
+  userName: String
+}
+
+input AddCommentInput {
+  referenceId: ID!
+  text: String!
+}
+
+type buyersReferralCode {
   usedBy: ID
   email: String
   code: String
   createdAt: DateTime
- 
 }
 "Allowed values for the `OrderFulfillmentGroupItems` sortBy parameter"
 enum OrderFulfillmentGroupItemsSortByField {
@@ -634,7 +649,10 @@ type Order implements Node {
 
   "The date and time at which this order was last updated"
   updatedAt: DateTime!
+
+  comments: [Comment]
 }
+
 extend enum PaymentMethodName {
   COD
 }
@@ -847,6 +865,7 @@ input UpdateOrderItemInput {
   """
   reason: String
 }
+
 enum subOrderStatus {
   New
   Confirmed
