@@ -8,6 +8,7 @@ import updateOrder from "./updateOrder.js";
 import updateOrderItem from "./updateOrderItem.js";
 import updateOrderFulfillmentGroup from "./updateOrderFulfillmentGroup.js";
 import addCommentToOrder from "./addCommentToOrder.js";
+import addItemToOrder from "./addItemToOrder.js";
 
 export default {
   addOrderFulfillmentGroup,
@@ -16,6 +17,7 @@ export default {
   moveOrderItems,
   placeOrder,
   splitOrderItem,
+  addItemToOrder,
   addCommentToOrder,
   updateOrder,
   updateOrderFulfillmentGroup,

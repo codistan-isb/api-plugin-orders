@@ -138,6 +138,8 @@ extend type Mutation {
 
   addCommentToOrder(input: AddCommentInput!): Order
 
+  addItemToOrder(input: addItemToOrderInput): Order
+
   """
   Use this mutation to update one item of an order, either for the full ordered quantity
   or for a partial quantity. If partial, the item will be split into two items and the
@@ -214,6 +216,12 @@ type Comment {
   createdAt: String
   userId: ID
   userName: String
+}
+
+input addItemToOrderInput {
+  orderId: ID!
+  productId: ID!
+  variantId: ID!
 }
 
 input AddCommentInput {
