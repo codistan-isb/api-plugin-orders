@@ -9,12 +9,14 @@ import updateOrder from "./updateOrder.js";
 import updateOrderItem from "./updateOrderItem.js";
 import updateOrderFulfillmentGroup from "./updateOrderFulfillmentGroup.js";
 import addCommentToOrder from "./addCommentToOrder.js";
+import addItemToOrder from "./addItemToOrder.js";
 
 export default {
   addOrderFulfillmentGroup,
   cancelOrderItem,
   createRefund,
   moveOrderItems,
+  addItemToOrder,
   placeOrder,
   sendOrderEmail,
   splitOrderItem,
