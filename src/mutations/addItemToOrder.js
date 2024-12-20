@@ -1,6 +1,7 @@
 
 import Random from "@reactioncommerce/random";
 import ReactionError from "@reactioncommerce/reaction-error";
+import { decodeOrderOpaqueId, decodeProductOpaqueId } from "../xforms/id.js"
 
 export default async function addItemToOrder(context, input) {
     const { collections, accountId } = context;
@@ -17,11 +18,18 @@ export default async function addItemToOrder(context, input) {
     const account = await Accounts.findOne({ _id: accountId });
     if (!account) {
         throw new ReactionError("not-found", "Account not found");
+
+
     }
 
     const { orderId, items } = input;
 
-    const order = await Orders.findOne({ _id: orderId });
+    const decodeOrder = decodeOrderOpaqueId(orderId)
+
+    console.log("decodeOrderOpaqueId", decodeOrder)
+
+
+    const order = await Orders.findOne({ _id: decodeOrder });
     if (!order) {
         throw new ReactionError("not-found", "Order not found");
     }
@@ -40,21 +48,24 @@ export default async function addItemToOrder(context, input) {
     };
 
     for (const { productId, variantId } of items) {
-        // Validation: Check if the product and variant already exist in the order's shipping items
+
+        const decodedProductId = decodeProductOpaqueId(productId);
+        const decodedVariantId = decodeProductOpaqueId(variantId);
+
         const productAlreadyInOrder = order.shipping.some((shipping) =>
-            shipping.items.some((item) => item.productId === productId && item.variantId === variantId)
+            shipping.items.some((item) => item.productId === decodedProductId && item.variantId === decodedVariantId)
         );
 
         if (productAlreadyInOrder) {
             throw new ReactionError(
                 "conflict",
-                `Product with ID ${productId} and Variant ID ${variantId} is already in the order. Duplicate products are not allowed.`
+                `Product with ID ${decodedProductId} and Variant ID ${decodedVariantId} is already in the order. Duplicate products are not allowed.`
             );
         }
 
         const product = await Catalog.findOne({
-            "product._id": productId,
-            "product.variants._id": variantId
+            "product._id": decodedProductId,
+            "product.variants._id": decodedVariantId
         });
 
         if (!product || !product.product) {
@@ -62,7 +73,7 @@ export default async function addItemToOrder(context, input) {
         }
 
         const actualProduct = product.product;
-        const variant = actualProduct.variants.find(v => v._id === variantId);
+        const variant = actualProduct.variants.find(v => v._id === decodedVariantId);
 
         if (!variant) {
             throw new ReactionError("not-found", "Variant not found");
@@ -110,12 +121,12 @@ export default async function addItemToOrder(context, input) {
         updates.$inc["totalItemQuantity"] += 1;
     }
 
-    const updateResult = await Orders.updateOne({ _id: orderId }, updates);
+    const updateResult = await Orders.updateOne({ _id: decodeOrder }, updates);
     if (updateResult.modifiedCount === 0) {
         throw new ReactionError("not-found", "Order not updated");
     }
 
-    const updatedOrder = await Orders.findOne({ _id: orderId }, { projection: { _id: 1 } });
+    const updatedOrder = await Orders.findOne({ _id: decodeOrder }, { projection: { _id: 1 } });
     if (!updatedOrder) {
         throw new ReactionError("not-found", "Order not found after update");
     }
