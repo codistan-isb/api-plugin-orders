@@ -220,6 +220,10 @@ type Comment {
 
 input addItemToOrderInput {
   orderId: ID!
+  items: [addItemInput!]!
+}
+
+input addItemInput {
   productId: ID!
   variantId: ID!
 }
