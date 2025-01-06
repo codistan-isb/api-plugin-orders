@@ -405,6 +405,11 @@ extend type uploadedBy {
   billingAddress: Address
   email: String
 }
+
+type info {
+  storeName: String
+}
+
 """
 A single item in an order. The item contains information about a purchase.
 """
@@ -507,6 +512,8 @@ type OrderItem implements Node {
 
   "The selected variant title"
   variantTitle: String
+
+  # addedby: addedby
 }
 
 """
@@ -597,6 +604,8 @@ type Order implements Node {
 
   sellerInfo: uploadedBy
 
+  storeInfo: info
+
   "The Order ID"
   _id: ID!
 
@@ -664,6 +673,11 @@ type Order implements Node {
 
   comments: [Comment]
 }
+
+# type addedInfo {
+#   name: String
+#   userId: String
+# }
 
 extend enum PaymentMethodName {
   COD
@@ -1151,6 +1165,20 @@ enum OrderFulfillmentStatus {
   new
 
   "An order that is currently being processed"
+  picked
+
+  pickedUp
+
+  canceled
+
+  packed
+
+  labeled
+
+  shipped
+
+  quality_issue
+
   processing
 }
 
@@ -1173,6 +1201,8 @@ enum OrderStatus {
 
   "A new order that needs processing"
   new
+
+  packed
 
   "An order that is being processed"
   processing
@@ -1203,4 +1233,6 @@ input OrderFilterInput {
 
   "The order's status to filter by"
   status: OrderStatus
+
+  sellerId: ID
 }
