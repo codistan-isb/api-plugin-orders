@@ -410,6 +410,12 @@ type info {
   storeName: String
 }
 
+type getDiscountCode {
+  code: String
+  discountId: String
+  discountAmount: String
+}
+
 """
 A single item in an order. The item contains information about a purchase.
 """
@@ -605,6 +611,8 @@ type Order implements Node {
   sellerInfo: uploadedBy
 
   storeInfo: info
+
+  getDiscountCode: getDiscountCode
 
   "The Order ID"
   _id: ID!
