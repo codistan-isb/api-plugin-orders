@@ -8,6 +8,8 @@ import refunds from "./refunds.js";
 import totalItemQuantity from "./totalItemQuantity.js";
 import billingName from "./billingName.js";
 import storeInfo from "./storeInfo.js";
+import getDiscountCode from "./discountCode.js";
+
 
 export default {
   _id: (node) => encodeOrderOpaqueId(node._id),
@@ -23,5 +25,6 @@ export default {
   status: (node) => node.workflow.status,
   summary: (node, _, context) => orderSummary(context, node),
   storeInfo,
+  getDiscountCode,
   totalItemQuantity
 };
