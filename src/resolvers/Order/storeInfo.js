@@ -9,6 +9,10 @@ export default async function storeInfo(node, args, context) {
 
         const account = await Accounts.find({ _id: sellerId }).toArray()
 
+        if (!account || account.length === 0) {
+            return null; // No account found, safely return null
+        }
+
         const storeName = account[0].storeName
 
         return { storeName }
