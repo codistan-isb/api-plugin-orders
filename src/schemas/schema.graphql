@@ -905,28 +905,32 @@ enum subOrderStatus {
   Confirmed
   Out_Of_Stock
   Quality_Issue
-  Pickup_Generation
+  Pickup_Generated
   Arrived_At_Office
   Office_Stock
   Dispatched
-  RTS_Quality_Issue
-  RTS_Cancelled
-  RTS_Returned
-  Completed
+  Returned_To_Seller
+  Return_in_Process
+  Dispatched_On_MP
+  Dispatched_On_TCS
+  Dipatched_On_Leopard
+  Dispatched_On_Daewoo
+  Dispatched_On_Postex
   Dispatched_On_Penta
-  Dispatched_On_Rider
-  Dispatched_On_Leopard
-  Dispatched_On_Swyft
-  Dispatched_On_Deawoo
-  Return_In_Process
+  Booked_On_Penta
   Delivered
-  ReShared
+  Payment_Released
+  Restocked
   On_Hold
-  Consignee_Not_Responding
+  Customer_Not_Responding
   Seller_Not_Responding
   Refunded
-  Exchanged
-  Customer_Feedback_Done
+  Payment_Pending
+  Refund_In_Process
+  Quality_Check_In_Progress
+  Quality_Approved
+  Return_Received
+  Product_Available
 }
 
 "Input for the cancelOrderItem mutation"
@@ -1058,20 +1062,21 @@ enum mainOrderStatus {
   Cancelled
   Confirmed
   Out_Of_Stock
-  Quality_Issue
   Dispatched
-  Dispatched_On_Penta
-  Dispatched_On_Rider
-  Dispatched_On_
-  Leopard
-  Dispatched_On_Swyft
-  Dispatched_On_Deawoo
-  Return_In_Process
   Delivered
   Completed
   On_Hold
-  Consignee_Not_Responding
+  Customer_Not_Responding
+  Refunded
   Customer_Feedback_Done
+  Refund_In_Process
+
+  # Quality_Issue
+  # Dispatched_On_Penta
+  # Dispatched_On_Rider
+  # Dispatched_On_Leopard
+  # Dispatched_On_Swyft
+  # Dispatched_On_Deawoo
 }
 
 "Response payload for the addOrderFulfillmentGroup mutation"
