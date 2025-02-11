@@ -6,6 +6,7 @@ import Logger from "@reactioncommerce/logger";
 import fetch from "node-fetch"
 import { onCreateOrder, onUpdateOrder, onSubOrderUpdated } from "./util/customStatuses.js";
 
+
 /**
  * @summary Called on startup
  * @param {Object} context Startup context
@@ -32,6 +33,6 @@ export default function ordersStartup(context) {
 
   // EVENTS CALL ON THE FULLFILLMENT GROUP ITEMS  UPDATED  (SUBORDER  ORDER STATUS UPDATED)
   appEvents.on("afterSubOrderUpdate", async ({ subOrder, updatedBy }) => {
-    await onSubOrderUpdated(subOrder, context)
+    await onSubOrderUpdated(subOrder, context, updatedBy)
   });
 }

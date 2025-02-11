@@ -170,12 +170,14 @@ export default async function updateOrderItem(context, input) {
     modifier,
     { returnOriginal: false }
   );
+
+  console.log('Order updated successfully in order items updated:', updatedOrder);
   if (modifiedCount === 0 || !updatedOrder) throw new ReactionError("server-error", "Unable to update order");
 
-  await appEvents.emit("afterOrderUpdate", {
-    order: updatedOrder,
-    updatedBy: userId,
-  });
+  // await appEvents.emit("afterOrderUpdate", {
+  //   order: updatedOrder,
+  //   updatedBy: userId,
+  // });
 
   await appEvents.emit("afterOrderStatusUpdate", {
     order: updatedOrder,

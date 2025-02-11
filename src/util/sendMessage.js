@@ -26,11 +26,11 @@ export async function sendMessage(context, userId, message, phoneNumber) {
 
         const response = await fetch(apiUrl);
 
-        console.log("RESPONSE URL", response)
+        // console.log("RESPONSE URL", response)
         const data = await response.json();
 
 
-        console.log("DATA RESPONSE", data)
+        // console.log("DATA RESPONSE", data)
 
         if (data && data.success === "true") {
             Logger.info(`Message sent successfully to ${phone}`);

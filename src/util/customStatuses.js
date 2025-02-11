@@ -81,6 +81,8 @@ export async function onSubOrderUpdated(subOrder, context) {
     if (subOrder.workflow && subOrder.workflow.status === "RTS_Cancelled") {
         // console.log("ORDER IN THE ON UPDATE STATUS HIT THE RTS_Cancelled")
         await orerCancelNotification(subOrder, context, productPurchased,)
+    } else if (subOrder.workflow && subOrder.workflow.status === "Out_Of_Stock") {
+        await onOutofStockNotification(subOrder, context, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Quality_Issue") {
         await onQualityIssueNotification(subOrder, context, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Pickup_Generated") {
