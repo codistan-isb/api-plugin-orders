@@ -892,6 +892,7 @@ const SelectedFulfillmentOption = new SimpleSchema({
  * @property {Number} totalItemQuantity The total item quantity, sum of all quantities
  * @property {String} tracking Tracking reference ID
  * @property {String} trackingUrl Tracking URL
+ * @property {String} courier_Name Tracking URL
  * @property {String} type Fulfillment type
  * @property {Object} workflow Current status and past statuses for this fulfillment
  */
@@ -927,6 +928,10 @@ export const OrderFulfillmentGroup = new SimpleSchema({
     optional: true,
   },
   trackingUrl: {
+    type: String,
+    optional: true,
+  },
+  courier_Name: {
     type: String,
     optional: true,
   },
@@ -1168,6 +1173,10 @@ export const Order = new SimpleSchema({
   "payments.$": Payment,
   referenceId: {
     type: String,
+  },
+  reason: {
+    type: String,
+    optional: true,
   },
   shipping: [OrderFulfillmentGroup],
   shopId: String,

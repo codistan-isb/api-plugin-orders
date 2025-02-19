@@ -10,6 +10,10 @@ const inputSchema = new SimpleSchema({
     type: String,
     optional: true
   },
+  courier_Name: {
+    type: String,
+    optional: true
+  },
   orderFulfillmentGroupId: String,
   orderId: String,
   status: {
@@ -31,6 +35,7 @@ export default async function updateOrderFulfillmentGroup(context, input) {
   const {
     tracking,
     trackingUrl,
+    courier_Name,
     orderFulfillmentGroupId,
     orderId,
     status
@@ -38,7 +43,7 @@ export default async function updateOrderFulfillmentGroup(context, input) {
 
   const { appEvents, collections, userId } = context;
   const { Orders } = collections;
-  console.log("status", status.split("\\ coreOrderWorkflow/created"));
+  // console.log("status", status.split("\\ coreOrderWorkflow/created"));
   // First verify that this order actually exists
   const order = await Orders.findOne({ _id: orderId });
   if (!order) throw new ReactionError("not-found", "Order not found");
@@ -63,6 +68,7 @@ export default async function updateOrderFulfillmentGroup(context, input) {
 
   if (tracking) modifier.$set["shipping.$[group].tracking"] = tracking;
   if (trackingUrl) modifier.$set["shipping.$[group].trackingUrl"] = trackingUrl;
+  if (courier_Name) modifier.$set["shipping.$[group].courier_Name"] = courier_Name;
 
   if (status && orderFulfillmentGroup.workflow.status !== status) {
     modifier.$set["shipping.$[group].workflow.status"] = status;

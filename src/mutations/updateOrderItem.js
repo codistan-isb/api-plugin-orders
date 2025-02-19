@@ -13,9 +13,15 @@ const inputSchema = new SimpleSchema({
 
   itemId: String,
   orderId: String,
-  status: String
+  status: String,
+  reason: {
+    type: String,
+    optional: true
+  }
 
 });
+
+const statusArray = ["Cancelled", "Out_Of_Stock", "Quality_Issue", "Returned_To_Seller", "Delivered", "Payment_Released", "Restocked", "Refunded"];
 
 /**
  * @method updateOrderItem
@@ -45,6 +51,9 @@ export default async function updateOrderItem(context, input) {
   const { accountId, appEvents, collections, userId } = context;
   const { Orders } = collections;
 
+  if (status === 'Returned_To_Seller' && !reason) {
+    throw new ReactionError("required", "Reason is required when the status is 'Returned_To_Seller'");
+  }
   // First verify that this order actually exists
   const order = await Orders.findOne({ _id: orderId });
   if (!order) throw new ReactionError("not-found", "Order not found");
@@ -67,6 +76,7 @@ export default async function updateOrderItem(context, input) {
   let foundItem = false;
   const updatedGroups = order.shipping.map((group) => {
     let itemToAdd;
+    let groupStatusUpdated = false;
     const updatedItems = group.items.map((item) => {
       if (item._id !== itemId) return item;
       foundItem = true;
@@ -96,7 +106,7 @@ export default async function updateOrderItem(context, input) {
 
       const updatedItem = {
         ...item,
-        // cancelReason: reason,
+        cancelReason: reason,
         // quantity: cancelQuantity
       };
 
@@ -114,9 +124,16 @@ export default async function updateOrderItem(context, input) {
       // We set the status and the update reason if one was provided.
       // This will also decrement the quantity to match the quantity that is being
       // canceled, which will be offset by pushing `itemToAdd` into the array later.
+      if (statusArray.includes(status)) {
+        groupStatusUpdated = true;
+      }
       return updatedItem;
     });
 
+    if (groupStatusUpdated) {
+      group.workflow.status = 'Completed';
+      group.workflow.workflow.push('Completed');
+    }
     // If they canceled fewer than the full quantity of the item, add a new
     // non-canceled item to make up the difference.
     if (itemToAdd) {
@@ -140,7 +157,7 @@ export default async function updateOrderItem(context, input) {
   // If we did not find any matching item ID while looping, something is wrong
   if (!foundItem) throw new ReactionError("not-found", "Order item not found");
 
-  // If all groups are canceled, set the order status to canceled
+  // If all groups are canceled, set the order status to canceled   
   let updatedOrderWorkflow;
   let fullOrderWasCanceled = false;
   const allGroupsAreUpdated = updatedGroups.every((group) => group.workflow.status === status);
@@ -158,6 +175,15 @@ export default async function updateOrderItem(context, input) {
       updatedAt: new Date()
     }
   };
+  const anyItemHasSpecifiedStatus = updatedGroups.some(group =>
+    group.items.some(item =>
+      statusArray.includes(item.workflow.status)
+    )
+  );
+
+  if (anyItemHasSpecifiedStatus) {
+    modifier.$set["workflow.status"] = "Completed";
+  }
 
   if (updatedOrderWorkflow) {
     modifier.$set.workflow = updatedOrderWorkflow;

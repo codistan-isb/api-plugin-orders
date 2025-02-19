@@ -30,6 +30,7 @@ export async function onCreateOrder(order, context, createdBy) {
 
     await sendMessage(context, null, buyerMessage, order?.shipping[0]?.address?.phone)
 
+
     createNotification(context, {
         details: null,
         from: createdBy,
@@ -70,7 +71,6 @@ export async function onUpdateOrder(order, context, updatedBy) {
         // Optionally, handle or log the unhandled status appropriately
     }
 
-
 }
 
 export async function onSubOrderUpdated(subOrder, context) {
@@ -91,6 +91,8 @@ export async function onSubOrderUpdated(subOrder, context) {
         await onReturnedToSellerkNotification(subOrder, context, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Return_in_Process") {
         await onReturninProcessNotification(subOrder, context, productPurchased)
+    } else if (subOrder.workflow && subOrder.workflow.status === "Dispatched") {
+        await onDispatchedNotification(subOrder, context, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Dispatched_On_MP") {
         await onDispatchedOnMPNotification(subOrder, context, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Dipatched_On_Leopard") {
@@ -103,6 +105,8 @@ export async function onSubOrderUpdated(subOrder, context) {
         await onDispatchedOnPostexNotification(subOrder, context, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Booked_On_Penta") {
         await onBookedOnPentaNotification(subOrder, context, productPurchased)
+    } else if (subOrder.workflow && subOrder.workflow.status === "Booked_on_PostEx") {
+        await onBookedPostEx(subOrder, context, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Dispatched_On_Penta") {
         await onDispatchedOnPentaNotification(subOrder, context, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Delivered") {
@@ -572,6 +576,42 @@ async function onBookedOnPentaNotification(order, context, productPurchased) {
 
 }
 
+
+async function onBookedPostEx(order, context, productPurchased) {
+
+    const { collections } = context
+    const { Catalog, Products } = collections
+
+    const productId = productPurchased?.ancestors[0]
+    const productLink = await Catalog.findOne({ "product._id": productId })
+    const sellerName = productPurchased.uploadedBy.name
+
+    // console.log("SELLER NAME", sellerName)
+    if (!productLink) throw new ReactionError("not-found", "Product not found");
+
+    const { slug } = productLink.product;
+
+    let sellerMessage =
+        'Subject: Pickup Scheduled for Your Item\n\n' +
+        'Dear ' + sellerName + ',\n\n' +
+        'We would like to inform you that we have scheduled the pickup of your article at https://staging.bizb.store/product/' + slug + ' with our third-party logistics partner. Please ensure that all details previously shared with you are clearly marked on the parcel, and that it is properly packed.\n\n' +
+        'The rider will attempt to pick up the parcel within the next 3 working days. Please ensure you are available to respond promptly to the rider’s calls or messages, which may come from unknown numbers.\n\n' +
+        'When the rider arrives to pick up the parcel, kindly share a picture of the parcel being handed over to them. Without this, we will not be able to accept responsibility for any potential parcel loss.\n\n' +
+        'If the rider visits your address and you are unable to hand over the parcel, you will need to send it to our office using your own means.\n\n' +
+        'In case we receive an update from the courier indicating that your address is not within their service area, you will need to send the parcel to us directly.\n\n' +
+        'Thank you for your cooperation. If you encounter any issues or need further assistance, please don’t hesitate to contact us.\n\n' +
+        'Best regards,\n' +
+        'BizB Team';
+
+
+    // console.log("SLLER MESSAGE in PENTA BOOKED", sellerMessage)
+
+    await sendMessage(context, productPurchased?.uploadedBy?.userId, sellerMessage, null)
+
+
+}
+
+
 async function onDispatchedOnPentaNotification(order, context, productPurchased) {
 
     let buyerMessage =
@@ -720,7 +760,7 @@ async function OnHoldNotification(order, context, productPurchased) {
 
 async function OnRefundedNotification(order, context, productPurchased) {
 
-    let sellerMessage =
+    let buyerMessage =
         'Subject: Refund Process Completed for Your Order\n\n' +
         'Hi ' + order?.shipping[0]?.address?.fullName + ',\n\n' +
         'We hope you\'re doing well! We’re pleased to inform you that the refund for your canceled order ' + order?.referenceId + ' has been successfully processed and credited to your provided account details.\n\n' +
@@ -732,7 +772,7 @@ async function OnRefundedNotification(order, context, productPurchased) {
 
     // console.log("BUYER MESSAGE", sellerMessage);
 
-    await sendMessage(context, productPurchased?.uploadedBy?.userId, sellerMessage, null)
+    await sendMessage(context, null, buyerMessage, order?.shipping[0]?.address?.phone)
 }
 
 async function OnRefundInProcessNotification(order, context, productPurchased) {

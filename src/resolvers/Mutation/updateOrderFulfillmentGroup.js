@@ -23,7 +23,8 @@ export default async function updateOrderFulfillmentGroup(parentResult, { input 
     orderFulfillmentGroupId,
     status,
     tracking,
-    trackingUrl
+    trackingUrl,
+    courier_Name
   } = input;
 
   const { order } = await context.mutations.updateOrderFulfillmentGroup(context, {
@@ -31,7 +32,8 @@ export default async function updateOrderFulfillmentGroup(parentResult, { input 
     orderFulfillmentGroupId: decodeOrderFulfillmentGroupOpaqueId(orderFulfillmentGroupId),
     status,
     tracking,
-    trackingUrl
+    trackingUrl,
+    courier_Name
   });
 
   return {
