@@ -918,6 +918,7 @@ enum subOrderStatus {
   Dispatched_On_Postex
   Dispatched_On_Penta
   Booked_On_Penta
+  Booked_on_PostEx
   Delivered
   Payment_Released
   Restocked
@@ -1053,6 +1054,8 @@ input UpdateOrderFulfillmentGroupInput {
 
   "Set this as the current order fulfillment group shipment tracking reference"
   tracking: String
+
+  courier_Name: String
 
   "Set this as the current order fulfillment group shipment tracking URL"
   trackingUrl: String
