@@ -20,14 +20,20 @@ export default async function updateOrderItem(parentResult, { input }, context) 
     itemId,
     status,
     orderId,
-    reason = null
+    reason,
+    tracking,
+    courier_Name,
+    tracking_URL
   } = input;
 
   const { order } = await context.mutations.updateOrderItem(context, {
     itemId: decodeOrderItemOpaqueId(itemId),
     orderId: decodeOrderOpaqueId(orderId),
     status,
-    reason
+    reason,
+    tracking,
+    courier_Name,
+    tracking_URL
   });
 
   return {

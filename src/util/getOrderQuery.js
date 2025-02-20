@@ -17,9 +17,24 @@ export async function getOrderQuery(context, selector, shopId, token) {
 
   const order = await collections.Orders.findOne(selector);
 
+  // console.log("order", order);
+  // console.log("order============", order.shipping[0]);
+
+  let shippingWorkflows = [];
+  if (order.shipping && order.shipping.length > 0) {
+    shippingWorkflows = order.shipping.map((shipment, index) => ({
+      index: index + 1,
+      workflowStatus: shipment.workflow.workflow
+    }));
+  } else {
+    shippingWorkflows = "No shipping information available.";
+  }
   if (!order) {
     throw new ReactionError("not-found", "Order not found");
   }
+
+  order.shippingWorkflows = shippingWorkflows;
+
 
   // If you have the hashed token, you don't need to pass a permission check
   if (token && order.anonymousAccessTokens.some((accessToken) => accessToken.hashedToken === hashToken(token))) {

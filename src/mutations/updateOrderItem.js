@@ -17,6 +17,19 @@ const inputSchema = new SimpleSchema({
   reason: {
     type: String,
     optional: true
+  },
+  tracking: {
+    type: String,
+    optional: true
+  },
+
+  courier_Name: {
+    type: String,
+    optional: true
+  },
+  tracking_URL: {
+    type: String,
+    optional: true
   }
 
 });
@@ -45,11 +58,17 @@ export default async function updateOrderItem(context, input) {
     orderId,
     itemId,
     status,
-    reason = null
+    reason,
+    tracking,
+    courier_Name,
+    tracking_URL
   } = input;
   console.log("updateOrderItem", status)
   const { accountId, appEvents, collections, userId } = context;
   const { Orders } = collections;
+
+
+  // console.log("APPP EVENTS IN THE UPDATE ORDER ITEMS", appEvents)
 
   if (status === 'Returned_To_Seller' && !reason) {
     throw new ReactionError("required", "Reason is required when the status is 'Returned_To_Seller'");
@@ -106,7 +125,10 @@ export default async function updateOrderItem(context, input) {
 
       const updatedItem = {
         ...item,
-        cancelReason: reason,
+        ...(reason !== undefined && { cancelReason: reason }),
+        ...(tracking !== undefined && { tracking: tracking }),
+        ...(courier_Name !== undefined && { courier_Name: courier_Name }),
+        ...(tracking_URL !== undefined && { tracking_URL: tracking_URL })
         // quantity: cancelQuantity
       };
 
@@ -197,7 +219,8 @@ export default async function updateOrderItem(context, input) {
     { returnOriginal: false }
   );
 
-  console.log('Order updated successfully in order items updated:', updatedOrder);
+  // console.log('Order updated successfully in order items updated:', updatedOrder);
+  // console.log('Order updated successfully in order items updated: SHIPPING', updatedOrder.shipping[0]);
   if (modifiedCount === 0 || !updatedOrder) throw new ReactionError("server-error", "Unable to update order");
 
   // await appEvents.emit("afterOrderUpdate", {
@@ -210,7 +233,7 @@ export default async function updateOrderItem(context, input) {
     updatedBy: userId,
     itemId: itemId,
     sellerId: sellerId,
-    status: status,
+    status: status
   });
 
   // await appEvents.emit("afterOrderItemStatusUpdate", {
@@ -221,6 +244,7 @@ export default async function updateOrderItem(context, input) {
   //   updatedBy: userId
   // });
 
+  // console.log("Order updated successfully in order items updated:AFTER EMIT", updatedOrder.shipping[0]);
 
   return { order: updatedOrder };
 }

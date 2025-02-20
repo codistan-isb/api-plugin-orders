@@ -416,6 +416,11 @@ type getDiscountCode {
   discountAmount: String
 }
 
+type ItemsStatuses {
+  updatedAt: DateTime
+  workFlowStatus: [String]
+}
+
 """
 A single item in an order. The item contains information about a purchase.
 """
@@ -441,8 +446,16 @@ type OrderItem implements Node {
   """
   attributes: [OrderItemAttribute]
 
+  ItemsStatuses: [ItemsStatuses]
+
   "If this order item is canceled, the reason for cancelation, if provided"
   cancelReason: String
+
+  tracking: String
+
+  courier_Name: String
+
+  tracking_URL: String
 
   "The date and time at which the order item was created"
   createdAt: DateTime!
@@ -604,6 +617,11 @@ type OrderFulfillmentGroup implements Node {
   type: FulfillmentType!
 }
 
+type workflowStatus {
+  index: Int!
+  workflowStatus: [String]!
+}
+
 "An order"
 type Order implements Node {
   parentOrder: ID
@@ -645,6 +663,8 @@ type Order implements Node {
 
   "One or more fulfillment groups. Each of these are fulfilled and charged as separate orders."
   fulfillmentGroups: [OrderFulfillmentGroup]!
+
+  shippingWorkflows: [workflowStatus]
 
   "Notes about the order. This will always return an array but it may be empty"
   notes: [OrderNote]!
@@ -898,6 +918,12 @@ input UpdateOrderItemInput {
   or to the user who placed the order.
   """
   reason: String
+
+  tracking: String
+
+  courier_Name: String
+
+  tracking_URL: String
 }
 
 enum subOrderStatus {

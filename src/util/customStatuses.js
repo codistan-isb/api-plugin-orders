@@ -73,9 +73,9 @@ export async function onUpdateOrder(order, context, updatedBy) {
 
 }
 
-export async function onSubOrderUpdated(subOrder, context) {
+export async function onSubOrderUpdated(subOrder, context, itemId) {
 
-    // console.log("ORDER IN THE CHILD ORDER UPDATE", subOrder)
+    // console.log("ORDER IN THE CHILD ORDER UPDATE ITEM ID", itemId)
     let productPurchased = await getProductbyId(context, { productId: subOrder?.shipping[0]?.items[0]?.variantId });
 
     if (subOrder.workflow && subOrder.workflow.status === "RTS_Cancelled") {
@@ -88,27 +88,27 @@ export async function onSubOrderUpdated(subOrder, context) {
     } else if (subOrder.workflow && subOrder.workflow.status === "Pickup_Generated") {
         await onPickupGeneratedNotification(subOrder, context, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Returned_To_Seller") {
-        await onReturnedToSellerkNotification(subOrder, context, productPurchased)
+        await onReturnedToSellerkNotification(subOrder, context, productPurchased, itemId)
     } else if (subOrder.workflow && subOrder.workflow.status === "Return_in_Process") {
         await onReturninProcessNotification(subOrder, context, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Dispatched") {
-        await onDispatchedNotification(subOrder, context, productPurchased)
+        await onDispatchedChildNotification(subOrder, context, productPurchased, itemId)
     } else if (subOrder.workflow && subOrder.workflow.status === "Dispatched_On_MP") {
-        await onDispatchedOnMPNotification(subOrder, context, productPurchased)
+        await onDispatchedOnMPNotification(subOrder, context, itemId, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Dipatched_On_Leopard") {
-        await onDipatchedOnLeopardNotification(subOrder, context, productPurchased)
+        await onDipatchedOnLeopardNotification(subOrder, context, itemId, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Dispatched_On_TCS") {
-        await onDispatchedOnTCSNotification(subOrder, context, productPurchased)
+        await onDispatchedOnTCSNotification(subOrder, context, itemId, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Dispatched_On_Daewoo") {
-        await onDispatchedOnDaewooNotification(subOrder, context, productPurchased)
+        await onDispatchedOnDaewooNotification(subOrder, context, itemId, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Dispatched_On_Postex") {
-        await onDispatchedOnPostexNotification(subOrder, context, productPurchased)
+        await onDispatchedOnPostexNotification(subOrder, context, itemId, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Booked_On_Penta") {
         await onBookedOnPentaNotification(subOrder, context, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Booked_on_PostEx") {
         await onBookedPostEx(subOrder, context, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Dispatched_On_Penta") {
-        await onDispatchedOnPentaNotification(subOrder, context, productPurchased)
+        await onDispatchedOnPentaNotification(subOrder, context, itemId, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Delivered") {
         await onDeliveredNotification(subOrder, context, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Payment_Released") {
@@ -219,7 +219,7 @@ async function onConfirmNotification(order, context, productPurchased) {
     // console.log("ORDER: " + order)
 
     const { Catalog } = collections
-    console.log("productPurchased.ancestors[0]", productPurchased.ancestors[0])
+    // console.log("productPurchased.ancestors[0]", productPurchased.ancestors[0])
     const productId = productPurchased.ancestors[0]
 
     const productLink = await Catalog.findOne({ "product._id": productId })
@@ -389,20 +389,27 @@ async function onDispatchedNotification(order, context, productPurchased) {
     await sendMessage(context, productPurchased?.uploadedBy?.userId, sellerMessage, null)
 
 
+    // console.log("order?.shipping[0]?.items[0]", order?.shipping[0]?.items[0])
     let buyerMessage =
         'Subject: Your order ' + order?.referenceId + ' Is Dispatched\n\n' +
         'Hi ' + order?.shipping[0]?.address?.fullName + ',\n' +
         'We\'re excited to let you know that your order has been dispatched! It\'s on its way to you. The estimated delivery time is 3 to 4 working days.\n\n' +
-        'Please check this link for your order tracking: [insert tracking link here], so you can keep an eye on the progress of your order.\n\n' +
+        'Please check this link for your order tracking:  ' + order?.shipping[0]?.trackingUrl + ' so you can keep an eye on the progress of your order.\n\n' +
         'If you have any questions or need further assistance, feel free to contact our customer support.\n\n' +
         'Best regards,\n' +
         'BizB Team';
+
+    // console.log("BUYER MESSAGE: " + buyerMessage)
 
     // console.log("BUYER MESSAGE: ", buyerMessage);
     await sendMessage(context, null, buyerMessage, order?.shipping[0]?.address?.phone)
 
 }
-async function onReturnedToSellerkNotification(order, context, productPurchased) {
+
+
+async function onDispatchedChildNotification(order, context, productPurchased, itemId) {
+
+    // console.log("ITEM ID IN THE CHILD STATus", itemId)
     const { collections } = context
     const { Catalog } = collections
 
@@ -414,10 +421,70 @@ async function onReturnedToSellerkNotification(order, context, productPurchased)
     if (!productLink) throw new ReactionError("not-found", "Product not found");
 
     const { slug } = productLink.product;
+
+    const shippingArray = order.shipping[0];
+
+    const result = shippingArray.items;
+
+    // Find the matched item by item ID
+    const matchedItem = result.find(item => item._id === itemId);
+
+    if (!matchedItem) {
+        throw new ReactionError("not-found", "Item not found in the order");
+    }
+    const trackingURL = matchedItem.tracking_URL || 'No Tracking Provided provided';
+
+    let sellerMessage =
+        'Subject: Your item https://staging.bizb.store/product/' + slug + ' Is Dispatched\n\n' +
+        'Hi ' + sellerName + ',\n' +
+        'We\'re excited to let you know that your item at https://staging.bizb.store/product/' + slug + ' has been dispatched to the buyer! \n\n' +
+        'If you have any questions or need further assistance, feel free to contact our customer support.\n\n' +
+        'Best regards,\n' +
+        'BizB Team';
+
+    await sendMessage(context, productPurchased?.uploadedBy?.userId, sellerMessage, null)
+
+    let buyerMessage =
+        'Subject: Your order ' + order?.referenceId + ' Is Dispatched\n\n' +
+        'Hi ' + order?.shipping[0]?.address?.fullName + ',\n' +
+        'We\'re excited to let you know that your order has been dispatched! It\'s on its way to you. The estimated delivery time is 3 to 4 working days.\n\n' +
+        'Please check this link for your order tracking:  ' + trackingURL + ' so you can keep an eye on the progress of your order.\n\n' +
+        'If you have any questions or need further assistance, feel free to contact our customer support.\n\n' +
+        'Best regards,\n' +
+        'BizB Team';
+
+    await sendMessage(context, null, buyerMessage, order?.shipping[0]?.address?.phone)
+
+}
+
+async function onReturnedToSellerkNotification(order, context, productPurchased, itemId) {
+    const { collections } = context
+    const { Catalog } = collections
+
+    const productId = productPurchased?.ancestors[0]
+    const productLink = await Catalog.findOne({ "product._id": productId })
+    const sellerName = productPurchased.uploadedBy.name
+
+    if (!productLink) throw new ReactionError("not-found", "Product not found");
+
+    const { slug } = productLink.product;
+
+    const shippingArray = order.shipping[0];
+    const result = shippingArray.items;
+
+    // Find the matched item by item ID
+    const matchedItem = result.find(item => item._id === itemId);
+
+    if (!matchedItem) {
+        throw new ReactionError("not-found", "Item not found in the order");
+    }
+
+    const returnReason = matchedItem.cancelReason || 'No reason provided';
+
     let sellerMessage =
         'Subject: Product Returned to You\n\n' +
         'Hi ' + sellerName + ',\n\n' +
-        'We wanted to inform you that your product at https://staging.bizb.store/product/' + slug + ' has been sent back to you. The reason for the return is: [Reason for Return].\n\n' +
+        'We wanted to inform you that your product at https://staging.bizb.store/product/' + slug + ' has been sent back to you. The reason for the return is: ' + returnReason + '' + '.\n\n' +
         'Please ensure to review the product and address the mentioned issue. If you have any questions or require further clarification, feel free to reach out to us.\n\n' +
         'Thank you for your cooperation.\n\n' +
         'Best regards,\n' +
@@ -457,30 +524,60 @@ async function onReturninProcessNotification(order, context, productPurchased) {
     await sendMessage(context, null, buyerMessage, order?.shipping[0]?.address?.phone)
 }
 
-async function onDispatchedOnMPNotification(order, context, productPurchased) {
+async function onDispatchedOnMPNotification(order, context, itemId, productPurchased) {
+
+
+    const shippingArray = order.shipping[0];
+
+    const result = shippingArray.items;
+
+    // Find the matched item by item ID
+    const matchedItem = result.find(item => item._id === itemId);
+
+    if (!matchedItem) {
+        throw new ReactionError("not-found", "Item not found in the order");
+    }
+    const trackingURL = matchedItem.tracking_URL || 'No Tracking Provided provided';
+    const tracking = matchedItem.tracking || 'No reason provided';
+    const courier_Name = matchedItem.courier_Name || 'No courier_Name provided';
 
     let buyerMessage =
         'Subject: Your order ' + order?.referenceId + ' Is Dispatched\n\n' +
         'Hi ' + order?.shipping[0]?.address?.fullName + ',\n' +
         'We\'re excited to let you know that your order has been dispatched! It\'s on its way to you. The estimated delivery time is 3 to 4 working days.\n\n' +
-        'Please check this link for your tracking info: [insert tracking URL here] (Tracking number: [insert tracking number here], Courier: [insert courier name here]), so you can keep an eye on the progress of your order.\n\n' +
+        'Please check this link for your tracking info:' + trackingURL + ' (Tracking number: ' + tracking + ', Courier: ' + courier_Name + '), so you can keep an eye on the progress of your order.\n\n' +
         'If you have any questions or need further assistance, feel free to contact our customer support.\n\n' +
         'Best regards,\n' +
         'BizB Team';
 
-    // console.log("buyer Message: ", buyerMessage);
+    // console.log("buyer Message: ON MP ", buyerMessage);
 
     await sendMessage(context, null, buyerMessage, order?.shipping[0]?.address?.phone)
 
+
 }
 
-async function onDispatchedOnTCSNotification(order, context, productPurchased) {
+async function onDispatchedOnTCSNotification(order, context, itemId, productPurchased) {
+
+    const shippingArray = order.shipping[0];
+
+    const result = shippingArray.items;
+
+    // Find the matched item by item ID
+    const matchedItem = result.find(item => item._id === itemId);
+
+    if (!matchedItem) {
+        throw new ReactionError("not-found", "Item not found in the order");
+    }
+    const trackingURL = matchedItem.tracking_URL || 'No tracking  provided';
+    const tracking = matchedItem.tracking || 'No reason provided';
+    const courier_Name = matchedItem.courier_Name || 'No courier_Name provided';
 
     let buyerMessage =
         'Subject: Your order ' + order?.referenceId + ' Is Dispatched\n\n' +
         'Hi ' + order?.shipping[0]?.address?.fullName + ',\n' +
         'We\'re excited to let you know that your order has been dispatched! It\'s on its way to you. The estimated delivery time is 3 to 4 working days.\n\n' +
-        'Please check your order tracking here: [insert tracking link here] (Tracking Number: [insert tracking number], Courier: [insert courier name]), so you can keep an eye on the progress of your order.\n\n' +
+        'Please check your order tracking here: ' + trackingURL + ' (Tracking Number:' + tracking + ', Courier: ' + courier_Name + '), so you can keep an eye on the progress of your order.\n\n' +
         'If you have any questions or need further assistance, feel free to contact our customer support.\n\n' +
         'Best regards,\n' +
         'BizB Team';
@@ -490,13 +587,26 @@ async function onDispatchedOnTCSNotification(order, context, productPurchased) {
     await sendMessage(context, null, buyerMessage, order?.shipping[0]?.address?.phone)
 
 }
-async function onDipatchedOnLeopardNotification(order, context, productPurchased) {
+async function onDipatchedOnLeopardNotification(order, context, itemId, productPurchased) {
+    const shippingArray = order.shipping[0];
+
+    const result = shippingArray.items;
+
+    // Find the matched item by item ID
+    const matchedItem = result.find(item => item._id === itemId);
+
+    if (!matchedItem) {
+        throw new ReactionError("not-found", "Item not found in the order");
+    }
+    const trackingURL = matchedItem.tracking_URL || 'No tracking  provided';
+    const tracking = matchedItem.tracking || 'No reason provided';
+    const courier_Name = matchedItem.courier_Name || 'No courier_Name provided';
 
     let buyerMessage =
         'Subject: Your order ' + order?.referenceId + ' Is Dispatched\n\n' +
         'Hi ' + order?.shipping[0]?.address?.fullName + ',\n' +
         'We\'re excited to let you know that your order has been dispatched! It\'s on its way to you. The estimated delivery time is 3 to 4 working days.\n\n' +
-        'Please check this link for your order tracking: [insert tracking link here], and your tracking number is [insert tracking number here] with [insert courier name] as the courier, so you can keep an eye on the progress of your order.\n\n' +
+        'Please check this link for your order tracking: ' + trackingURL + ' , and your tracking number is ' + tracking + ' with  ' + courier_Name + ' as the courier, so you can keep an eye on the progress of your order.\n\n' +
         'If you have any questions or need further assistance, feel free to contact our customer support.\n\n' +
         'Best regards,\n' +
         'BizB Team';
@@ -507,13 +617,28 @@ async function onDipatchedOnLeopardNotification(order, context, productPurchased
 
 }
 
-async function onDispatchedOnDaewooNotification(order, context, productPurchased) {
+async function onDispatchedOnDaewooNotification(order, context, itemId, productPurchased) {
+
+    const shippingArray = order.shipping[0];
+
+    const result = shippingArray.items;
+
+    // Find the matched item by item ID
+    const matchedItem = result.find(item => item._id === itemId);
+
+    if (!matchedItem) {
+        throw new ReactionError("not-found", "Item not found in the order");
+    }
+    const trackingURL = matchedItem.tracking_URL || 'No tracking  provided';
+    const tracking = matchedItem.tracking || 'No reason provided';
+    const courier_Name = matchedItem.courier_Name || 'No courier_Name provided';
+
 
     let buyerMessage =
         'Subject: Your order ' + order?.referenceId + ' Is Dispatched\n\n' +
         'Hi ' + order?.shipping[0]?.address?.fullName + ',\n' +
         'We\'re excited to let you know that your order has been dispatched! It\'s on its way to you. The estimated delivery time is 3 to 4 working days.\n\n' +
-        'Please check your tracking information here: [insert tracking link here], with Tracking Number: [insert tracking number], Courier: [insert courier name], so you can keep an eye on the progress of your order.\n\n' +
+        'Please check your tracking information here: ' + trackingURL + ' , with Tracking Number: ' + tracking + ', Courier: ' + courier_Name + ', so you can keep an eye on the progress of your order.\n\n' +
         'If you have any questions or need further assistance, feel free to contact our customer support.\n\n' +
         'Best regards,\n' +
         'BizB Team';
@@ -524,13 +649,27 @@ async function onDispatchedOnDaewooNotification(order, context, productPurchased
 
 }
 
-async function onDispatchedOnPostexNotification(order, context, productPurchased) {
+async function onDispatchedOnPostexNotification(order, context, itemId, productPurchased) {
+
+    const shippingArray = order.shipping[0];
+
+    const result = shippingArray.items;
+
+    // Find the matched item by item ID
+    const matchedItem = result.find(item => item._id === itemId);
+
+    if (!matchedItem) {
+        throw new ReactionError("not-found", "Item not found in the order");
+    }
+    const trackingURL = matchedItem.tracking_URL || 'No tracking  provided';
+    const tracking = matchedItem.tracking || 'No reason provided';
+    const courier_Name = matchedItem.courier_Name || 'No courier_Name provided';
 
     let buyerMessage =
         'Subject: Your order ' + order?.referenceId + ' Is Dispatched\n\n' +
         'Hi ' + order?.shipping[0]?.address?.fullName + ',\n' +
         'We\'re excited to let you know that your order has been dispatched! It\'s on its way to you. The estimated delivery time is 3 to 4 working days.\n\n' +
-        'Please check this link for your order tracking: [insert tracking link here], with Tracking Number: [insert tracking number], Courier: [insert courier name], so you can keep an eye on the progress of your order.\n\n' +
+        'Please check this link for your order tracking: ' + trackingURL + ', with Tracking Number: ' + tracking + ', Courier: ' + courier_Name + ', so you can keep an eye on the progress of your order.\n\n' +
         'If you have any questions or need further assistance, feel free to contact our customer support.\n\n' +
         'Best regards,\n' +
         'BizB Team';
@@ -540,7 +679,6 @@ async function onDispatchedOnPostexNotification(order, context, productPurchased
     await sendMessage(context, null, buyerMessage, order?.shipping[0]?.address?.phone)
 
 }
-
 
 async function onBookedOnPentaNotification(order, context, productPurchased) {
 
@@ -572,10 +710,7 @@ async function onBookedOnPentaNotification(order, context, productPurchased) {
     // console.log("SLLER MESSAGE in PENTA BOOKED", sellerMessage)
 
     await sendMessage(context, productPurchased?.uploadedBy?.userId, sellerMessage, null)
-
-
 }
-
 
 async function onBookedPostEx(order, context, productPurchased) {
 
@@ -611,14 +746,28 @@ async function onBookedPostEx(order, context, productPurchased) {
 
 }
 
+async function onDispatchedOnPentaNotification(order, context, itemId, productPurchased) {
 
-async function onDispatchedOnPentaNotification(order, context, productPurchased) {
+
+    const shippingArray = order.shipping[0];
+
+    const result = shippingArray.items;
+
+    // Find the matched item by item ID
+    const matchedItem = result.find(item => item._id === itemId);
+
+    if (!matchedItem) {
+        throw new ReactionError("not-found", "Item not found in the order");
+    }
+    const trackingURL = matchedItem.tracking_URL || 'No tracking  provided';
+    const tracking = matchedItem.tracking || 'No reason provided';
+    const courier_Name = matchedItem.courier_Name || 'No courier_Name provided';
 
     let buyerMessage =
         'Subject: Your Order ' + order?.referenceId + ' Is Dispatched\n\n' +
         'Hi ' + order?.shipping[0]?.address?.fullName + ',\n' +
         'We\'re excited to let you know that your order ' + order?.referenceId + ' has been dispatched! It\'s on its way to you. The estimated delivery time is 3 to 4 working days.\n\n' +
-        'Please check this link for your order tracking: [insert tracking link here], with Tracking Number: [insert tracking number], Courier: [insert courier name], so you can keep an eye on the progress of your order.\n\n' +
+        'Please check this link for your order tracking: ' + trackingURL + ', with Tracking Number: ' + tracking + ', Courier: ' + courier_Name + ', so you can keep an eye on the progress of your order.\n\n' +
         'If you have any questions or need further assistance, feel free to contact our customer support\n\n' +
         'Best regards,\n' +
         'BizB Team';

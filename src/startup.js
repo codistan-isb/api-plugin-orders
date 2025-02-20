@@ -32,7 +32,7 @@ export default function ordersStartup(context) {
   });
 
   // EVENTS CALL ON THE FULLFILLMENT GROUP ITEMS  UPDATED  (SUBORDER  ORDER STATUS UPDATED)
-  appEvents.on("afterSubOrderUpdate", async ({ subOrder, updatedBy }) => {
-    await onSubOrderUpdated(subOrder, context, updatedBy)
+  appEvents.on("afterSubOrderUpdate", async ({ subOrder, itemId, updatedBy }) => {
+    await onSubOrderUpdated(subOrder, context, itemId, updatedBy)
   });
 }
