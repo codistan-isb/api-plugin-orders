@@ -736,6 +736,9 @@ const OrderItemAttribute = new SimpleSchema({
  * @property {String} addedAt Date/time when this was first added to the cart/order
  * @property {OrderItemAttribute[]} attributes Attributes of this item
  * @property {String} cancelReason Free text reason for cancel, if this item is canceled
+ * @property {String} tracking Free text reason for cancel, if this item is canceled
+ * @property {String} courier_Name Free text reason for cancel, if this item is canceled
+ * @property {String} tracking_URL Free text reason for cancel, if this item is canceled
  * @property {String} createdAt Date/time when this order item was created
  * @property {Document[]} documents optional
  * @property {History[]} history optional
@@ -766,6 +769,19 @@ export const OrderItem = new SimpleSchema({
   "attributes.$": OrderItemAttribute,
   sellerId: { type: String, optional: true },
   cancelReason: {
+    type: String,
+    optional: true,
+  },
+
+  tracking: {
+    type: String,
+    optional: true,
+  },
+  courier_Name: {
+    type: String,
+    optional: true,
+  },
+  tracking_URL: {
     type: String,
     optional: true,
   },
@@ -1173,10 +1189,6 @@ export const Order = new SimpleSchema({
   "payments.$": Payment,
   referenceId: {
     type: String,
-  },
-  reason: {
-    type: String,
-    optional: true,
   },
   shipping: [OrderFulfillmentGroup],
   shopId: String,

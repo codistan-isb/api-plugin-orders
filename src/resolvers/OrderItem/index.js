@@ -3,6 +3,7 @@ import { encodeOrderItemOpaqueId } from "../../xforms/id.js";
 import productTags from "./productTags.js";
 import uploadedBy from "./uploadedBy.js";
 import imageURLs from "./imageURLs.js";
+import ItemsStatuses from "./itemsStatuses.js";
 
 export default {
   _id: (node) => encodeOrderItemOpaqueId(node._id),
@@ -10,5 +11,6 @@ export default {
   uploadedBy,
   shop: resolveShopFromShopId,
   imageURLs,
-  status: (node) => node.workflow.status
+  status: (node) => node.workflow.status,
+  ItemsStatuses
 };
