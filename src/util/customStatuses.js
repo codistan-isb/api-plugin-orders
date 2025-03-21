@@ -21,7 +21,8 @@ export async function onCreateOrder(order, context, createdBy) {
         'Subject: Your Order ' + order?.referenceId + ' is Placed\n' +
         'Hi ' + order?.shipping[0]?.address?.fullName + ',\n\n' +
         'Thank you for your purchase! Your order is placed successfully. Please note that the order delivery process may take 7-10 working days.\n\n' +
-        'Visit our store: https://bizb.store\n\n' +
+        'View your store: https://bizb.store\n\n' +
+        'Visit our order: https://bizb.storeen/checkout/order?orderId=' + order?.referenceId + ' \n\n' +
         'Order Summary:\n' +
         await generateOrderSummary(order?.shipping[0]?.items) + '\n\n' +
         'Please respond to this message for confirmation by typing "confirmed". If you have any questions or need further assistance, feel free to contact our customer support at support@bizb.store.\n\n' +
@@ -80,7 +81,9 @@ export async function onSubOrderUpdated(subOrder, context, itemId) {
 
     if (subOrder.workflow && subOrder.workflow.status === "RTS_Cancelled") {
         // console.log("ORDER IN THE ON UPDATE STATUS HIT THE RTS_Cancelled")
-        await orerCancelNotification(subOrder, context, productPurchased,)
+        await orerCancelNotification(subOrder, context, productPurchased)
+    } if (subOrder.workflow && subOrder.workflow.status === "Cancelled") {
+        await orerCancelNotification(subOrder, context, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Out_Of_Stock") {
         await onOutofStockNotification(subOrder, context, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Quality_Issue") {
@@ -107,6 +110,8 @@ export async function onSubOrderUpdated(subOrder, context, itemId) {
         await onBookedOnPentaNotification(subOrder, context, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Booked_on_PostEx") {
         await onBookedPostEx(subOrder, context, productPurchased)
+    } else if (subOrder.workflow && subOrder.workflow.status === "Dispatched_On_Trax") {
+        await onDispatchedOnTraxNotification(subOrder, context, itemId, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Dispatched_On_Penta") {
         await onDispatchedOnPentaNotification(subOrder, context, itemId, productPurchased)
     } else if (subOrder.workflow && subOrder.workflow.status === "Delivered") {
@@ -234,12 +239,12 @@ async function onConfirmNotification(order, context, productPurchased) {
         "Subject: Your Item Has Been Purchased!\n\n" +
         "Dear " + productPurchased?.uploadedBy?.name + ",\n\n" +
         "We're excited to inform you that one of your listed items on BizB has been purchased by a buyer! Congratulations on your sale!\n\n" +
-        "Please ensure that the item at https://staging.bizb.store/product/" + slug + " is neat and clean and ready for pickup by our logistics partner. The rider will visit to collect the article from your specified location. Kindly have the item packed securely and ready for handover.\n\n" +
+        "Please ensure that the item at https://bizb.storeproduct/" + slug + " is neat and clean and ready for pickup by our logistics partner. The rider will visit to collect the article from your specified location. Kindly have the item packed securely and ready for handover.\n\n" +
         "Thank you for choosing BizB as your platform for selling preloved fashion. If you have any questions or need assistance, feel free to reach out to our seller support team.\n\n" +
         "Best regards,\n" +
         "BizB Team";
     ;
-    // console.log("SELLER MESSAGE: ", sellerMessage)
+    console.log("SELLER MESSAGE: ", sellerMessage)
     await sendMessage(context, productPurchased?.uploadedBy?.userId, sellerMessage, null)
 
 }
@@ -269,15 +274,15 @@ async function onOutofStockNotification(order, context, productPurchased) {
     await context.mutations.publishProducts(context, [productId])
 
     let buyerMessage =
-        'Subject: Your Selected Product https://staging.bizb.store/product/' + slug + ' is Out of Stock\n' +
+        'Subject: Your Selected Product https://bizb.storeproduct/' + slug + ' is Out of Stock\n' +
         'Hi ' + order?.shipping[0]?.address?.fullName + ',\n\n' +
-        'We regret to inform you that the item you recently ordered https://staging.bizb.store/product/' + slug + ' is currently out of stock. We sincerely apologize for any inconvenience this may have caused.\n\n' +
+        'We regret to inform you that the item you recently ordered https://bizb.storeproduct/' + slug + ' is currently out of stock. We sincerely apologize for any inconvenience this may have caused.\n\n' +
         'Our inventory is regularly updated, and we encourage you to visit our store to explore a wide range of other exciting products that might interest you.\n\n' +
         'If you have any questions or need further assistance, please don’t hesitate to reach out to our customer support team—we’re here to help!\n\n' +
         'Best regards,\n' +
         'Bizb Team';
 
-    // console.log("buyer Message: ", buyerMessage);
+    console.log("buyer Message: ", buyerMessage);
     await sendMessage(context, null, buyerMessage, order?.shipping[0]?.address?.phone)
 }
 
@@ -309,28 +314,28 @@ async function onQualityIssueNotification(order, context, productPurchased) {
     let sellerMessage =
         'Subject: Quality Check Update for Your Item\n' +
         'Dear ' + sellerName + ',\n\n' +
-        'We regret to inform you that your item https://staging.bizb.store/product/' + slug + ' did not pass our quality check stage. We understand that this may be disappointing, but we need to maintain our quality standards.\n\n' +
+        'We regret to inform you that your item https://bizb.storeproduct/' + slug + ' did not pass our quality check stage. We understand that this may be disappointing, but we need to maintain our quality standards.\n\n' +
         'The item will be returned to you shortly. If you have any questions or concerns, please feel free to reach out to us.\n\n' +
         'Thank you for your understanding.\n' +
         'Best regards,\n' +
         'BizB Team';
 
 
-    // console.log("SELLER MESSAGE: ", sellerMessage)
+    console.log("SELLER MESSAGE: ", sellerMessage)
     await sendMessage(context, productPurchased?.uploadedBy?.userId, sellerMessage, null)
 
 
     let buyerMessage =
         'Subject: Update on Your Order - Quality Check Status\n' +
         'Hi ' + order?.shipping[0]?.address?.fullName + ',\n\n' +
-        'We regret to inform you that the item you recently ordered https://staging.bizb.store/product/' + slug + ' did not pass our quality check. We sincerely apologize for any inconvenience this may have caused. Please know that we prioritize the quality of our products and customer trust, which is why we cannot compromise on these standards.\n\n' +
+        'We regret to inform you that the item you recently ordered https://bizb.storeproduct/' + slug + ' did not pass our quality check. We sincerely apologize for any inconvenience this may have caused. Please know that we prioritize the quality of our products and customer trust, which is why we cannot compromise on these standards.\n\n' +
         'Our inventory is regularly updated, and we invite you to explore our wide range of other high-quality products available on our store/website.\n\n' +
         'If you have any questions or need further assistance, please don’t hesitate to contact our customer support team. We’re here to help!\n\n' +
         'Best regards,\n' +
         'Bizb Team';
 
 
-    // console.log("buyerMessage: ", buyerMessage);
+    console.log("buyerMessage: ", buyerMessage);
 
     await sendMessage(context, null, buyerMessage, order?.shipping[0]?.address?.phone)
 }
@@ -351,7 +356,7 @@ async function onPickupGeneratedNotification(order, context, productPurchased) {
     let sellerMessage =
         'Subject: Pickup Scheduled for Your Item\n\n' +
         'Dear ' + sellerName + ',\n\n' +
-        'We would like to inform you that we have scheduled the pickup of your article https://staging.bizb.store/product/' + slug + ' with our third-party logistics partner. Please ensure that all details previously shared with you are clearly marked on the parcel, and that it is properly packed.\n\n' +
+        'We would like to inform you that we have scheduled the pickup of your article https://bizb.store/product/' + slug + ' with our third-party logistics partner. Please ensure that all details previously shared with you are clearly marked on the parcel, and that it is properly packed.\n\n' +
         'The rider will attempt to pick up the parcel within the next 3 working days. Please ensure you are available to respond promptly to the rider’s calls or messages, which may come from unknown numbers.\n\n' +
         'When the rider arrives to pick up the parcel, kindly share a picture of the parcel being handed over to them. Without this, we will not be able to accept responsibility for any potential parcel loss.\n\n' +
         'If the rider visits your address and you are unable to hand over the parcel, you will need to send it to our office using your own means.\n\n' +
@@ -377,19 +382,18 @@ async function onDispatchedNotification(order, context, productPurchased) {
 
     const { slug } = productLink.product;
     let sellerMessage =
-        'Subject: Your item https://staging.bizb.store/product/' + slug + ' Is Dispatched\n\n' +
+        'Subject: Your item https://bizb.store/product/' + slug + ' Is Dispatched\n\n' +
         'Hi ' + sellerName + ',\n' +
-        'We\'re excited to let you know that your item at https://staging.bizb.store/product/' + slug + ' has been dispatched to the buyer! \n\n' +
+        'We\'re excited to let you know that your item at https://bizb.store/product/' + slug + ' has been dispatched to the buyer! \n\n' +
         'If you have any questions or need further assistance, feel free to contact our customer support.\n\n' +
         'Best regards,\n' +
         'BizB Team';
 
-    // console.log("SELLER MESSAGE", sellerMessage);
+    console.log("SELLER MESSAGE", sellerMessage);
 
     await sendMessage(context, productPurchased?.uploadedBy?.userId, sellerMessage, null)
 
 
-    // console.log("order?.shipping[0]?.items[0]", order?.shipping[0]?.items[0])
     let buyerMessage =
         'Subject: Your order ' + order?.referenceId + ' Is Dispatched\n\n' +
         'Hi ' + order?.shipping[0]?.address?.fullName + ',\n' +
@@ -399,13 +403,10 @@ async function onDispatchedNotification(order, context, productPurchased) {
         'Best regards,\n' +
         'BizB Team';
 
-    // console.log("BUYER MESSAGE: " + buyerMessage)
-
-    // console.log("BUYER MESSAGE: ", buyerMessage);
+    console.log("BUYER MESSAGE: ", buyerMessage);
     await sendMessage(context, null, buyerMessage, order?.shipping[0]?.address?.phone)
 
 }
-
 
 async function onDispatchedChildNotification(order, context, productPurchased, itemId) {
 
@@ -435,9 +436,9 @@ async function onDispatchedChildNotification(order, context, productPurchased, i
     const trackingURL = matchedItem.tracking_URL || 'No Tracking Provided provided';
 
     let sellerMessage =
-        'Subject: Your item https://staging.bizb.store/product/' + slug + ' Is Dispatched\n\n' +
+        'Subject: Your item https://bizb.store/product/' + slug + ' Is Dispatched\n\n' +
         'Hi ' + sellerName + ',\n' +
-        'We\'re excited to let you know that your item at https://staging.bizb.store/product/' + slug + ' has been dispatched to the buyer! \n\n' +
+        'We\'re excited to let you know that your item at https://bizb.store/product/' + slug + ' has been dispatched to the buyer! \n\n' +
         'If you have any questions or need further assistance, feel free to contact our customer support.\n\n' +
         'Best regards,\n' +
         'BizB Team';
@@ -484,7 +485,7 @@ async function onReturnedToSellerkNotification(order, context, productPurchased,
     let sellerMessage =
         'Subject: Product Returned to You\n\n' +
         'Hi ' + sellerName + ',\n\n' +
-        'We wanted to inform you that your product at https://staging.bizb.store/product/' + slug + ' has been sent back to you. The reason for the return is: ' + returnReason + '' + '.\n\n' +
+        'We wanted to inform you that your product at https://bizb.store/product/' + slug + ' has been sent back to you. The reason for the return is: ' + returnReason + '' + '.\n\n' +
         'Please ensure to review the product and address the mentioned issue. If you have any questions or require further clarification, feel free to reach out to us.\n\n' +
         'Thank you for your cooperation.\n\n' +
         'Best regards,\n' +
@@ -512,7 +513,7 @@ async function onReturninProcessNotification(order, context, productPurchased) {
     let buyerMessage =
         'Subject: Return Initiation for Your Order\n\n' +
         'Hi ' + order?.shipping[0]?.address?.fullName + ',\n\n' +
-        'We have received your request to return the item at https://staging.bizb.store/product/' + slug + ' from your order ' + order?.referenceId + '. The return process has now been initiated.\n\n' +
+        'We have received your request to return the item at https://bizb.store/product/' + slug + ' from your order ' + order?.referenceId + '. The return process has now been initiated.\n\n' +
         'Our team will guide you through the next steps to ensure a smooth return experience. Please make sure the item is securely packed and includes all original tags and packaging.\n\n' +
         'If you have any questions or need assistance during the return process, feel free to reach out to us. We\'re here to help!\n\n' +
         'Thank you for choosing Bizb.\n\n' +
@@ -611,7 +612,7 @@ async function onDipatchedOnLeopardNotification(order, context, itemId, productP
         'Best regards,\n' +
         'BizB Team';
 
-    // console.log("buyer Message on LeoPard", buyerMessage);
+    console.log("buyer Message on LeoPard", buyerMessage);
 
     await sendMessage(context, null, buyerMessage, order?.shipping[0]?.address?.phone)
 
@@ -697,7 +698,7 @@ async function onBookedOnPentaNotification(order, context, productPurchased) {
     let sellerMessage =
         'Subject: Pickup Scheduled for Your Item\n\n' +
         'Dear ' + sellerName + ',\n\n' +
-        'We would like to inform you that we have scheduled the pickup of your article at https://staging.bizb.store/product/' + slug + ' with our third-party logistics partner. Please ensure that all details previously shared with you are clearly marked on the parcel, and that it is properly packed.\n\n' +
+        'We would like to inform you that we have scheduled the pickup of your article at https://bizb.store/product/' + slug + ' with our third-party logistics partner. Please ensure that all details previously shared with you are clearly marked on the parcel, and that it is properly packed.\n\n' +
         'The rider will attempt to pick up the parcel within the next 3 working days. Please ensure you are available to respond promptly to the rider’s calls or messages, which may come from unknown numbers.\n\n' +
         'When the rider arrives to pick up the parcel, kindly share a picture of the parcel being handed over to them. Without this, we will not be able to accept responsibility for any potential parcel loss.\n\n' +
         'If the rider visits your address and you are unable to hand over the parcel, you will need to send it to our office using your own means.\n\n' +
@@ -729,7 +730,7 @@ async function onBookedPostEx(order, context, productPurchased) {
     let sellerMessage =
         'Subject: Pickup Scheduled for Your Item\n\n' +
         'Dear ' + sellerName + ',\n\n' +
-        'We would like to inform you that we have scheduled the pickup of your article at https://staging.bizb.store/product/' + slug + ' with our third-party logistics partner. Please ensure that all details previously shared with you are clearly marked on the parcel, and that it is properly packed.\n\n' +
+        'We would like to inform you that we have scheduled the pickup of your article at https://bizb.store/product/' + slug + ' with our third-party logistics partner. Please ensure that all details previously shared with you are clearly marked on the parcel, and that it is properly packed.\n\n' +
         'The rider will attempt to pick up the parcel within the next 3 working days. Please ensure you are available to respond promptly to the rider’s calls or messages, which may come from unknown numbers.\n\n' +
         'When the rider arrives to pick up the parcel, kindly share a picture of the parcel being handed over to them. Without this, we will not be able to accept responsibility for any potential parcel loss.\n\n' +
         'If the rider visits your address and you are unable to hand over the parcel, you will need to send it to our office using your own means.\n\n' +
@@ -743,6 +744,43 @@ async function onBookedPostEx(order, context, productPurchased) {
 
     await sendMessage(context, productPurchased?.uploadedBy?.userId, sellerMessage, null)
 
+
+}
+
+async function onDispatchedOnTraxNotification(order, context, itemId, productPurchased) {
+
+
+    console.log("ORDER IN THE TRAx", order)
+
+    const shippingArray = order.shipping[0];
+
+    const result = shippingArray.items;
+
+    console.log("RESULT", result)
+
+    // Find the matched item by item ID
+    const matchedItem = result.find(item => item._id === itemId);
+
+    if (!matchedItem) {
+        throw new ReactionError("not-found", "Item not found in the order");
+    }
+    const trackingURL = matchedItem.tracking_URL || 'No tracking  provided';
+    const tracking = matchedItem.tracking || 'No reason provided';
+    const courier_Name = matchedItem.courier_Name || 'No courier_Name provided';
+
+    let buyerMessage =
+        'Subject: Your Order ' + order?.referenceId + ' Is Dispatched\n\n' +
+        'Hi ' + order?.shipping[0]?.address?.fullName + ',\n' +
+        'We\'re excited to let you know that your order ' + order?.referenceId + ' has been dispatched! It\'s on its way to you. The estimated delivery time is 3 to 4 working days.\n\n' +
+        'Please check this link for your order tracking: ' + trackingURL + ', with Tracking Number: ' + tracking + ', Courier: ' + courier_Name + ', so you can keep an eye on the progress of your order.\n\n' +
+        'If you have any questions or need further assistance, feel free to contact our customer support\n\n' +
+        'Best regards,\n' +
+        'BizB Team';
+
+
+    // console.log("buyerMessage ON PENTA PATCHED", buyerMessage);
+
+    await sendMessage(context, null, buyerMessage, order?.shipping[0]?.address?.phone)
 
 }
 
@@ -848,7 +886,7 @@ async function onPaymentReleasedNotification(order, context, productPurchased) {
     let sellerMessage =
         'Subject: Payment Transfer Notification\n\n' +
         'Dear ' + sellerName + ',\n' +
-        'We\'re pleased to inform you that the payment for your sold item at https://staging.bizb.store/product/' + slug + ' on BizB has been successfully transferred to your account. You should see the funds reflected in your account shortly.\n' +
+        'We\'re pleased to inform you that the payment for your sold item at https://bizb.store/product/' + slug + ' on BizB has been successfully transferred to your account. You should see the funds reflected in your account shortly.\n' +
         'Thank you for choosing BizB as your platform for selling preloved fashion. If you have any questions or need further assistance, please don\'t hesitate to reach out to our support team.\n' +
         'Best regards,\n' +
         'BizB Team';
@@ -878,7 +916,7 @@ async function onCompletedNotification(order, context, productPurchased) {
     Subject: Payment Transfer Notification
 
     Dear ${sellerName},
-    We're pleased to inform you that the payment for your sold item https://staging.bizb.store/product/${slug} on BizB has been successfully transferred to your account. You should see the funds reflected in your account shortly.
+    We're pleased to inform you that the payment for your sold item https://bizb.store/product/${slug} on BizB has been successfully transferred to your account. You should see the funds reflected in your account shortly.
     Thank you for choosing BizB as your platform for selling preloved fashion. If you have any questions or need further assistance, please don't hesitate to reach out to our support team.
 
 
@@ -958,7 +996,7 @@ async function OnQualityApprovedNotification(order, context, productPurchased) {
     let sellerMessage =
         'Subject: Your Article is Ready for Dispatch!\n\n' +
         'Hi ' + sellerName + ',\n\n' +
-        'Great news! Your article at https://staging.bizb.store/product/' + slug + ' has successfully passed our quality check process on Bizb 🎉. It is now ready to be dispatched to the customer.\n\n' +
+        'Great news! Your article at https://bizb.store/product/' + slug + ' has successfully passed our quality check process on Bizb 🎉. It is now ready to be dispatched to the customer.\n\n' +
         'If you have any questions or need further assistance, please don’t hesitate to reach out to our support team.\n\n' +
         'Thank you for your commitment to quality! 😊\n\n' +
         'Best regards,\n' +

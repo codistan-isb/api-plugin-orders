@@ -929,6 +929,8 @@ input UpdateOrderItemInput {
 enum subOrderStatus {
   New
   Confirmed
+  RTS_Cancelled
+  Cancelled
   Out_Of_Stock
   Quality_Issue
   Pickup_Generated
@@ -942,6 +944,7 @@ enum subOrderStatus {
   Dipatched_On_Leopard
   Dispatched_On_Daewoo
   Dispatched_On_Postex
+  Dispatched_On_Trax
   Dispatched_On_Penta
   Booked_On_Penta
   Booked_on_PostEx
