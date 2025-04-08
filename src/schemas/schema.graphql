@@ -765,10 +765,26 @@ input OrderFulfillmentGroupItemInput {
   quantity: Int!
 }
 
+input addressInput {
+  address1: String
+  address2: String
+  city: String
+  company: String
+  country: String
+  fullName: String
+  isBillingDefault: Boolean
+  isCommercial: Boolean
+  isShippingDefault: Boolean
+  phone: String
+  postal: String
+  region: String
+  cnic: String
+}
+
 "Information needed by the selected fulfillment method to properly fulfill the order"
 input OrderFulfillmentGroupDataInput {
   "The mailing address to which this fulfillment group should be shipped"
-  shippingAddress: AddressInput
+  shippingAddress: addressInput
 }
 
 "Input for an `OrderFulfillmentGroup`"
@@ -797,6 +813,15 @@ input OrderFulfillmentGroupInput {
   The fulfillment type. Any valid type that has been registered by a fulfillment plugin. Examples: `shipping`, `digital`
   """
   type: FulfillmentType!
+
+  paymentMethod: paymentMethodValues
+}
+
+enum paymentMethodValues {
+  COD
+  CASH
+  CARD
+  JAZZCASH
 }
 
 "Similar to `OrderFulfillmentGroupInput` but `items` can be omitted if moving existing items to the new group"
@@ -882,7 +907,7 @@ input PaymentInput {
   data: JSONObject
 
   "The name of the payment method to use for this payment"
-  method: PaymentMethodName!
+  method: PaymentMethodName
 }
 
 "Input for the addOrderFulfillmentGroup mutation"

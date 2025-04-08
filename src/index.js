@@ -16,6 +16,7 @@ import getDataForOrderEmail from "./util/getDataForOrderEmail.js";
  * @returns {undefined}
  */
 export default async function register(app) {
+  console.log("Registering Orders Plugin");
   await app.registerPlugin({
     label: "Orders",
     name: "orders",
@@ -39,6 +40,11 @@ export default async function register(app) {
           [{ "payments.address.phone": 1 }],
           [{ "workflow.status": 1 }, { name: "c2_workflow.status" }]
         ]
+      },
+      TransactionDetails: {
+        name: "TransactionDetails",
+        updatedAt: { type: Date, default: Date.now },
+        createdAt: { type: Date, default: Date.now },
       }
     },
     functionsByType: {

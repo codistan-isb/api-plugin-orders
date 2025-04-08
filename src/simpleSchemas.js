@@ -118,12 +118,13 @@ const Metafield = new SimpleSchema({
  * @property {String} firstName
  * @property {String} lastName
  * @property {String} address1 required
- * @property {String} address2
+ * @property {String} cnic
  * @property {String} city required
  * @property {String} company
  * @property {String} phone required
  * @property {String} region required, State/Province/Region
- * @property {String} postal required
+ * @property {String} cnic
+ * @property {String} postal required   
  * @property {String} country required
  * @property {Boolean} isCommercial required
  * @property {Boolean} isBillingDefault required
@@ -150,12 +151,22 @@ export const OrderAddress = new SimpleSchema({
     label: "Last name",
     optional: true,
   },
+
+  company: {
+    type: String,
+    label: "CNIC",
+    optional: true,
+  },
   address1: {
     label: "Address 1",
     type: String,
   },
   address2: {
     label: "Address 2",
+    type: String,
+  },
+  cnic: {
+    label: "CNIC",
     type: String,
     optional: true,
   },
@@ -176,6 +187,7 @@ export const OrderAddress = new SimpleSchema({
     label: "State/Province/Region",
     type: String,
   },
+
   postal: {
     label: "ZIP/Postal Code",
     type: String,
@@ -464,6 +476,12 @@ export const orderFulfillmentGroupInputSchema = new SimpleSchema({
   type: {
     type: String,
     allowedValues: ["shipping"],
+  },
+
+  paymentMethod: {
+    type: String,
+    allowedValues: ["COD", "CASH", "CARD", "JAZZCASH"],
+    optional: true
   },
 });
 

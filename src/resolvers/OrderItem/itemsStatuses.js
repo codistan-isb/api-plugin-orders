@@ -7,5 +7,5 @@ export default async function ItemStatuses(node, args, context) {
     const itemStatuses = node.workflow.workflow.map(status => status);
     const updatedAt = node.updatedAt
 
-    return [{ workFlowStatus: itemStatuses, updatedAt: updatedAt }];
+    return [{ workFlowStatus: itemStatuses }];
 }
