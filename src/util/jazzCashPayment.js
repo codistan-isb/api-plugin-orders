@@ -23,8 +23,10 @@ import cryptoJS from 'crypto-js';
 export default async function jazzCashPayment(orderId, orderTotal, finalFulfillmentGroups) {
     const fulfillmentGroup = finalFulfillmentGroups[0];
 
+    // console.log(`finalFulfillmentGroups ===: INSIDE THE PAYMENT FUNCTION ${JSON.stringify(finalFulfillmentGroups, null, 2)}`);
+
     // Extracting phone and cnic
-    let phone = fulfillmentGroup?.address?.phone || '';
+    let phone = fulfillmentGroup?.address?.jazzCashPhone || '';
 
     function formatPhoneNumber(number) {
         // Convert to string just in case it's a number

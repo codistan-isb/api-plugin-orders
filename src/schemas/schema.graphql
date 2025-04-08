@@ -779,6 +779,7 @@ input addressInput {
   postal: String
   region: String
   cnic: String
+  jazzCashPhone: String
 }
 
 "Information needed by the selected fulfillment method to properly fulfill the order"
