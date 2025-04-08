@@ -8,6 +8,7 @@ import getAnonymousAccessToken from "@reactioncommerce/api-utils/getAnonymousAcc
 import buildOrderFulfillmentGroupFromInput from "../util/buildOrderFulfillmentGroupFromInput.js";
 import verifyPaymentsMatchOrderTotal from "../util/verifyPaymentsMatchOrderTotal.js";
 import { Order as OrderSchema, orderInputSchema, Payment as PaymentSchema, paymentInputSchema } from "../simpleSchemas.js";
+import jazzCashPayment from "../util/jazzCashPayment.js";
 
 const inputSchema = new SimpleSchema({
   "order": orderInputSchema,
@@ -42,8 +43,13 @@ async function createPayments({
   shippingAddress,
   shop
 }) {
+
+
+  // console.log("SHOP IN THE PLACE ORDER", shop)
   // Determining which payment methods are enabled for the shop
   const availablePaymentMethods = shop.availablePaymentMethods || [];
+
+  // console.log("AVAILABLE PAYMENT METHODS", availablePaymentMethods)
 
   // Verify that total of payment inputs equals total due. We need to be sure
   // to do this before creating any payment authorizations
@@ -95,8 +101,11 @@ async function createPayments({
 
   let payments;
   try {
+    // console.log("PAYMENTS IN BEFORE PROMISE", payments)
     payments = await Promise.all(paymentPromises);
+    // console.log("PAYMENTS IN SIDE CHECK", payments)
     payments = payments.filter((payment) => !!payment); // remove nulls
+    // console.log("PAYMENTS IN SIDE CHECK AFTER FILTER", payments)
   } catch (error) {
     Logger.error("createOrder: error creating payments", error.message);
     throw new ReactionError("payment-failed", `There was a problem authorizing this payment: ${error.message}`);
@@ -187,8 +196,12 @@ export default async function placeOrder(context, input) {
     ordererPreferredLanguage,
     shopId
   } = orderInput;
+
+  // console.log("ORDER INPUT===", JSON.stringify(orderInput.fulfillmentGroups, null, 2));
   const { accountId, appEvents, collections, getFunctionsOfType, userId } = context;
-  const { Orders, Cart, Shops } = collections;
+  const { Orders, Cart, Shops, TransactionDetails } = collections;
+
+  // console.log("PAYMENT INPU ========T", paymentsInput)
 
   const shop = await context.queries.shopById(context, shopId);
   if (!shop) throw new ReactionError("not-found", "Shop not found");
@@ -265,6 +278,48 @@ export default async function placeOrder(context, input) {
     shippingAddress: shippingAddressForPayments,
     shop
   });
+
+
+  console.log("fulfillmentGroups[0].paymentMethod == ", fulfillmentGroups[0].paymentMethod == "JAZZCASH")
+
+  let paymentResposne;
+
+  if (fulfillmentGroups[0].paymentMethod == "JAZZCASH") {
+    console.log("INSIDE THE JAZZCAHS PYAMENT IF")
+    console.log("INSIDE THE finalFulfillmentGroups IF", finalFulfillmentGroups)
+    paymentResposne = await jazzCashPayment(orderId, orderTotal, finalFulfillmentGroups)
+
+    console.log("PAYMENT RESPONSE", paymentResposne)
+    if (fulfillmentGroups[0].paymentMethod == "JAZZCASH" && paymentResposne.pp_ResponseCode == "000") {
+      const { pp_TxnType, pp_Amount, pp_TxnCurrency, pp_TxnDateTime, pp_TxnRefNo, pp_ResponseCode, pp_ResponseMessage, pp_RetreivalReferenceNo, pp_MobileNumber, pp_CNIC } = paymentResposne;
+      const document = {
+        _id: Random.id(),
+        orderId: orderId,
+        transactionType: pp_TxnType,
+        amount: pp_Amount,
+        currency: pp_TxnCurrency,
+        transactionDateTime: pp_TxnDateTime,
+        transactionRefNo: pp_TxnRefNo,
+        responseCode: pp_ResponseCode,
+        responseMessage: pp_ResponseMessage,
+        retrievalReferenceNo: pp_RetreivalReferenceNo,
+        mobileNumber: pp_MobileNumber,
+        CNIC: pp_CNIC,
+        createdAt: new Date()
+      };
+      const result = await TransactionDetails.insertOne(document);
+      console.log(`New payment record created with the following id: ${result.insertedId}`);
+      console.log("PAYMENT SUCCESSFUL")
+    }
+  }
+
+  if (fulfillmentGroups[0].paymentMethod == "JAZZCASH" && paymentResposne.pp_ResponseCode != "000") {
+    throw new ReactionError(
+      "payment-failed",
+      "Payment has been failed"
+    );
+  }
+  // console.log("ORDER INPUT===", JSON.stringify(orderInput.fulfillmentGroups, null, 2));
 
   // Create anonymousAccessToken if no account ID
   const fullToken = accountId ? null : getAnonymousAccessToken();
