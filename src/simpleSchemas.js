@@ -125,6 +125,7 @@ const Metafield = new SimpleSchema({
  * @property {String} phone required
  * @property {String} region required, State/Province/Region
  * @property {String} cnic
+ *  @property {String} jazzCashPhone
  * @property {String} postal required   
  * @property {String} country required
  * @property {Boolean} isCommercial required
@@ -168,6 +169,12 @@ export const OrderAddress = new SimpleSchema({
   },
   cnic: {
     label: "CNIC",
+    type: String,
+    optional: true,
+  },
+
+  jazzCashPhone: {
+    label: "JazzCash Number",
     type: String,
     optional: true,
   },
