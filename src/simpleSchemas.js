@@ -118,6 +118,7 @@ const Metafield = new SimpleSchema({
  * @property {String} firstName
  * @property {String} lastName
  * @property {String} address1 required
+ * @property {String} address2 required
  * @property {String} cnic
  * @property {String} city required
  * @property {String} company
@@ -481,7 +482,7 @@ export const orderFulfillmentGroupInputSchema = new SimpleSchema({
   paymentMethod: {
     type: String,
     allowedValues: ["COD", "CASH", "CARD", "JAZZCASH"],
-    optional: true
+    optional: true,
   },
 });
 
