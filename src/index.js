@@ -1,5 +1,8 @@
 import pkg from "../package.json";
 import i18n from "./i18n/index.js";
+import cors from "cors";
+import bodyParser from "body-parser";
+import morgan from "morgan";
 import mutations from "./mutations/index.js";
 import policies from "./policies.json";
 import preStartup from "./preStartup.js";
@@ -9,12 +12,30 @@ import schemas from "./schemas/index.js";
 import { Order, OrderFulfillmentGroup, OrderItem } from "./simpleSchemas.js";
 import startup from "./startup.js";
 import getDataForOrderEmail from "./util/getDataForOrderEmail.js";
+import instantPaymentNotification from "./util/instantPaymenNotification.js";
 
 /**
  * @summary Import and call this function to add this plugin to your API.
  * @param {ReactionAPI} app The ReactionAPI instance
  * @returns {undefined}
  */
+
+
+
+function IPNPayment(context) {
+  const { app, collections, rootUrl } = context;
+
+  if (app.expressApp) {
+    app.expressApp.use(cors());
+    app.expressApp.use(bodyParser.json());
+    app.expressApp.use(bodyParser.urlencoded({ extended: true }));
+    app.expressApp.use(morgan("dev"));
+    app.expressApp.post("/jazzcash/ipn", instantPaymentNotification)
+  }
+}
+
+
+
 export default async function register(app) {
   console.log("Registering Orders Plugin");
   await app.registerPlugin({
@@ -50,7 +71,7 @@ export default async function register(app) {
     functionsByType: {
       getDataForOrderEmail: [getDataForOrderEmail],
       preStartup: [preStartup],
-      startup: [startup]
+      startup: [startup, IPNPayment]
     },
     graphQL: {
       resolvers,
