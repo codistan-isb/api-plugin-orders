@@ -12,7 +12,6 @@ import schemas from "./schemas/index.js";
 import { Order, OrderFulfillmentGroup, OrderItem } from "./simpleSchemas.js";
 import startup from "./startup.js";
 import getDataForOrderEmail from "./util/getDataForOrderEmail.js";
-import instantPaymentNotification from "./util/instantPaymenNotification.js";
 
 /**
  * @summary Import and call this function to add this plugin to your API.
@@ -23,17 +22,99 @@ import instantPaymentNotification from "./util/instantPaymenNotification.js";
 
 
 function IPNPayment(context) {
-  const { app, collections, rootUrl } = context;
+  const { app } = context;
 
   if (app.expressApp) {
     app.expressApp.use(cors());
     app.expressApp.use(bodyParser.json());
     app.expressApp.use(bodyParser.urlencoded({ extended: true }));
     app.expressApp.use(morgan("dev"));
-    app.expressApp.post("/jazzcash/ipn", instantPaymentNotification)
+
+    app.expressApp.post("/jazzcash/ipn", async (req, res) => {
+      try {
+        console.log("Collections available:", Object.keys(context.collections));
+
+        const { collections } = context;
+        const { TransactionDetails } = collections;
+        const payload = req.body;
+
+        let transactionDetails = await TransactionDetails.findOne({ transactionRefNo: payload.pp_TxnRefNo });
+
+        console.log("Transaction Details:", transactionDetails);
+
+        console.log("Payload received from JazzCash:", payload);
+        console.log("IPN Received: SECURE HASH ", payload.pp_SecureHash);
+
+        if (payload.pp_ResponseCode === "121") {
+          console.log("Payment success. Mark order as PAID.");
+          await TransactionDetails.updateOne(
+            { transactionRefNo: payload.pp_TxnRefNo },
+            {
+              $set: {
+                responseCode: payload.pp_ResponseCode,
+                responseMessage: payload.pp_ResponseMessage,
+              },
+            }
+          );
+          console.log("Transaction record updated with JazzCash response.");
+        } else {
+          console.log("Payment failed or cancelled.");
+        }
+
+        // Send IPN response back to JazzCash
+        return res.status(200).json({
+          transactionDetails,
+          pp_ResponseCode: payload.pp_ResponseCode,
+          pp_ResponseMessage: payload.pp_ResponseMessage,
+        });
+      } catch (error) {
+        console.error("Error processing JazzCash IPN:", error);
+        return res.status(500).json({
+          transactionDetails,
+          pp_ResponseCode: payload.pp_ResponseCode,
+          pp_ResponseMessage: payload.pp_ResponseMessage,
+        });
+      }
+    });
+    // app.expressApp.post("/jazzcash/ipn", async (req, res) => {
+    //   console.log("Collections available:", Object.keys(context.collections));
+
+    //   const { collections } = context;
+    //   const { TransactionDetails } = collections
+    //   const payload = req.body;
+
+    //   const transactionDetails = await TransactionDetails.findOne({ transactionRefNo: payload.pp_TxnRefNo });
+
+    //   console.log("Transaction Details:", transactionDetails);
+
+    //   console.log("Payloda that get from the Jazzcash:", payload);
+    //   console.log("IPN Received: SECURE HASH ", payload.pp_SecureHash);
+
+    //   if (payload.pp_ResponseCode === "121") {
+    //     console.log("Payment success. Mark order as PAID.");
+    //     // 👉 Save to DB, update order status etc.
+    //     await TransactionDetails.updateOne(
+    //       { transactionRefNo: payload.pp_TxnRefNo },
+    //       {
+    //         $set: {
+    //           responseCode: payload.pp_ResponseCode,
+    //           responseMessage: payload.pp_ResponseMessage,
+    //         },
+    //       }
+    //     );
+    //     // console.log("Transaction record updated with JazzCash response.");
+    //   } else {
+    //     console.log("Payment failed or cancelled.");
+    //     // 👉 Log failure, retry or notify user
+    //   }
+    //   // ✅ Send IPN response back to JazzCash
+    //   return res.status(200).json({
+    //     pp_ResponseCode: payload.pp_ResponseCode,
+    //     pp_ResponseMessage: "IPN received successfully"
+    //   })
+    // })
   }
 }
-
 
 
 export default async function register(app) {
@@ -70,8 +151,8 @@ export default async function register(app) {
     },
     functionsByType: {
       getDataForOrderEmail: [getDataForOrderEmail],
-      preStartup: [preStartup],
-      startup: [startup, IPNPayment]
+      preStartup: [preStartup, IPNPayment],
+      startup: [startup]
     },
     graphQL: {
       resolvers,
