@@ -965,6 +965,16 @@ export const OrderFulfillmentGroup = new SimpleSchema({
     type: SimpleSchema.Integer,
     min: 1,
   },
+
+  transactionDetailsId: {
+    type: String,
+    optional: true,
+  },
+  paymentMethod: {
+    type: String,
+    allowedValues: ["COD", "CASH", "CARD", "JAZZCASH"],
+    optional: true,
+  },
   tracking: {
     type: String,
     optional: true,
@@ -1229,6 +1239,15 @@ export const Order = new SimpleSchema({
   totalItemQuantity: {
     type: SimpleSchema.Integer,
     min: 1,
+  },
+  paymentMethod: {
+    type: String,
+    allowedValues: ["COD", "CASH", "CARD", "JAZZCASH"],
+    optional: true,
+  },
+  transactionDetailsId: {
+    type: String,
+    optional: true,
   },
   transactions: {
     type: Array,

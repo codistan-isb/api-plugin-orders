@@ -267,6 +267,8 @@ export default async function placeOrder(context, input) {
     return group;
   }));
 
+  console.log("FINAL FULFILLMENT GROUPS", finalFulfillmentGroups)
+
   const payments = await createPayments({
     accountId,
     billingAddress,
@@ -283,6 +285,8 @@ export default async function placeOrder(context, input) {
   console.log("fulfillmentGroups[0].paymentMethod == ", fulfillmentGroups[0].paymentMethod == "JAZZCASH")
 
   let paymentResposne;
+  let transactionDetailsId;
+
 
   if (fulfillmentGroups[0].paymentMethod == "JAZZCASH") {
     console.log("INSIDE THE JAZZCAHS PYAMENT IF")
@@ -307,7 +311,9 @@ export default async function placeOrder(context, input) {
         CNIC: pp_CNIC,
         createdAt: new Date()
       };
-      const result = await TransactionDetails.insertOne(document);
+      let result = await TransactionDetails.insertOne(document);
+      transactionDetailsId = result.insertedId; // Capture the inserted ID
+
       console.log(`New payment record created with the following id: ${result.insertedId}`);
       console.log("PAYMENT SUCCESSFUL")
     }
@@ -319,7 +325,6 @@ export default async function placeOrder(context, input) {
       "Payment has been failed"
     );
   }
-  // console.log("ORDER INPUT===", JSON.stringify(orderInput.fulfillmentGroups, null, 2));
 
   // Create anonymousAccessToken if no account ID
   const fullToken = accountId ? null : getAnonymousAccessToken();
@@ -345,7 +350,9 @@ export default async function placeOrder(context, input) {
     workflow: {
       status: "new",
       workflow: ["new"]
-    }
+    },
+    paymentMethod: fulfillmentGroups[0]?.paymentMethod || null, // Store paymentMethod from fulfillment group
+    transactionDetailsId: transactionDetailsId || null // Store TransactionDetails ID if available
   };
 
 
