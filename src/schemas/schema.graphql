@@ -5,6 +5,19 @@ input getOrderShippingByAddressInput {
   amount: Int!
 }
 
+type JazzCashPaymentResponse {
+  pp_TxnType: String
+  pp_Amount: String
+  pp_TxnCurrency: String
+  pp_TxnDateTime: String
+  pp_TxnRefNo: String
+  pp_ResponseCode: String
+  pp_ResponseMessage: String
+  pp_RetreivalReferenceNo: String
+  pp_MobileNumber: String
+  pp_CNIC: String
+}
+
 extend type Query {
   getOrderShippingByAddress(
     input: getOrderShippingByAddressInput
@@ -1199,6 +1212,8 @@ type PlaceOrderPayload {
 
   "If you are not logged in, this will be a token that can be used for future requests"
   token: String
+
+  paymentResponse: JazzCashPaymentResponse
 }
 
 "Response payload for the splitOrderItem mutation"
