@@ -316,6 +316,7 @@ export default async function placeOrder(context, input) {
 
       console.log(`New payment record created with the following id: ${result.insertedId}`);
       console.log("PAYMENT SUCCESSFUL")
+
     }
   }
 
@@ -409,9 +410,30 @@ export default async function placeOrder(context, input) {
   });
   await appEvents.emit("afterOrderCreate", { createdBy: userId, order });
 
-  return {
-    orders: [order],
-    // GraphQL response gets the raw token
-    token: fullToken && fullToken.token
-  };
+  if (fulfillmentGroups[0]?.paymentMethod === "JAZZCASH" && paymentResposne?.pp_ResponseCode === "000") {
+
+    console.log("transactionDetailsId", transactionDetailsId)
+    const transactionDetails = await TransactionDetails.findOne({ _id: transactionDetailsId });
+
+    console.log("Transaction Details===", transactionDetails)
+    return {
+      orders: [order],
+      token: fullToken && fullToken.token,
+      paymentResponse: {
+        pp_ResponseCode: transactionDetails.responseCode,
+        pp_ResponseMessage: transactionDetails.responseMessage
+      } // Include JazzCash payment response
+    };
+  } else {
+    return {
+      orders: [order],
+      token: fullToken && fullToken.token
+    };
+  }
+
+  // return {
+  //   orders: [order],
+  //   // GraphQL response gets the raw token
+  //   token: fullToken && fullToken.token
+  // };
 }
