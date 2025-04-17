@@ -717,6 +717,8 @@ type Order implements Node {
   updatedAt: DateTime!
 
   comments: [Comment]
+
+  paymentMethod: String
 }
 
 # type addedInfo {
