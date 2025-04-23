@@ -10,7 +10,7 @@ export default async function billingName(order) {
   if (!Array.isArray(order.payments)) return null;
   let name = "";
   order.payments.forEach((payment) => {
-    name = name.concat(`${payment.address.fullName}, `);
+    // name = name.concat(`${payment.address.fullName}, `);
   });
   // remove the last comma and whitespace
   return name.replace(/,\s*$/, "");
