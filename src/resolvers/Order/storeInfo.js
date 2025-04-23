@@ -14,7 +14,8 @@ export default async function storeInfo(node, args, context) {
         }
 
         const storeName = account[0].storeName
+        const pickUpAddress = account[0].pickUpAddress || null
 
-        return { storeName }
+        return { storeName, pickUpAddress }
     }
 }
