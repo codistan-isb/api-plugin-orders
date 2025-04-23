@@ -76,43 +76,6 @@ function IPNPayment(context) {
         });
       }
     });
-    // app.expressApp.post("/jazzcash/ipn", async (req, res) => {
-    //   console.log("Collections available:", Object.keys(context.collections));
-
-    //   const { collections } = context;
-    //   const { TransactionDetails } = collections
-    //   const payload = req.body;
-
-    //   const transactionDetails = await TransactionDetails.findOne({ transactionRefNo: payload.pp_TxnRefNo });
-
-    //   console.log("Transaction Details:", transactionDetails);
-
-    //   console.log("Payloda that get from the Jazzcash:", payload);
-    //   console.log("IPN Received: SECURE HASH ", payload.pp_SecureHash);
-
-    //   if (payload.pp_ResponseCode === "121") {
-    //     console.log("Payment success. Mark order as PAID.");
-    //     // 👉 Save to DB, update order status etc.
-    //     await TransactionDetails.updateOne(
-    //       { transactionRefNo: payload.pp_TxnRefNo },
-    //       {
-    //         $set: {
-    //           responseCode: payload.pp_ResponseCode,
-    //           responseMessage: payload.pp_ResponseMessage,
-    //         },
-    //       }
-    //     );
-    //     // console.log("Transaction record updated with JazzCash response.");
-    //   } else {
-    //     console.log("Payment failed or cancelled.");
-    //     // 👉 Log failure, retry or notify user
-    //   }
-    //   // ✅ Send IPN response back to JazzCash
-    //   return res.status(200).json({
-    //     pp_ResponseCode: payload.pp_ResponseCode,
-    //     pp_ResponseMessage: "IPN received successfully"
-    //   })
-    // })
   }
 }
 

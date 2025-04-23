@@ -421,6 +421,12 @@ extend type uploadedBy {
 
 type info {
   storeName: String
+  pickUpAddress: String
+}
+
+type customerInfo {
+  customerName: String
+  customerAdress: String
 }
 
 type getDiscountCode {
@@ -646,6 +652,8 @@ type Order implements Node {
   sellerInfo: uploadedBy
 
   storeInfo: info
+
+  customerInfo: customerInfo
 
   getDiscountCode: getDiscountCode
 

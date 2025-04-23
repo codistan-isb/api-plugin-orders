@@ -9,6 +9,7 @@ import totalItemQuantity from "./totalItemQuantity.js";
 import billingName from "./billingName.js";
 import storeInfo from "./storeInfo.js";
 import getDiscountCode from "./discountCode.js";
+import customerInfo from "./customerInfo.js";
 
 
 export default {
@@ -25,6 +26,7 @@ export default {
   status: (node) => node.workflow.status,
   summary: (node, _, context) => orderSummary(context, node),
   storeInfo,
+  customerInfo,
   getDiscountCode,
   totalItemQuantity
 };
