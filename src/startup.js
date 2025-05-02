@@ -4,7 +4,8 @@ import getProductbyId from "./util/getProductbyId.js";
 import { encodeShopOpaqueId, encodeProductOpaqueId, decodeProductOpaqueId, decodeShopOpaqueId } from "./xforms/id.js";
 import Logger from "@reactioncommerce/logger";
 import fetch from "node-fetch"
-import { onCreateOrder, onUpdateOrder, onSubOrderUpdated } from "./util/customStatuses.js";
+import { onCreateOrder, onUpdateOrder } from "./util/customStatuses.js";
+import { customSuborderStatus } from "./util/customChilOrderStatus.js";
 
 
 /**
@@ -33,6 +34,7 @@ export default function ordersStartup(context) {
 
   // EVENTS CALL ON THE FULLFILLMENT GROUP ITEMS  UPDATED  (SUBORDER  ORDER STATUS UPDATED)
   appEvents.on("afterSubOrderUpdate", async ({ subOrder, itemId, updatedBy }) => {
-    await onSubOrderUpdated(subOrder, context, itemId, updatedBy)
+    // await onSubOrderUpdated(subOrder, context, itemId, updatedBy)
+    await customSuborderStatus(subOrder, context, itemId, updatedBy)
   });
 }
