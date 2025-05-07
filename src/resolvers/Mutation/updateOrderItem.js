@@ -23,7 +23,8 @@ export default async function updateOrderItem(parentResult, { input }, context) 
     reason,
     tracking,
     courier_Name,
-    tracking_URL
+    tracking_URL,
+    pickupCharge
   } = input;
 
   const { order } = await context.mutations.updateOrderItem(context, {
@@ -33,7 +34,8 @@ export default async function updateOrderItem(parentResult, { input }, context) 
     reason,
     tracking,
     courier_Name,
-    tracking_URL
+    tracking_URL,
+    pickupCharge
   });
 
   return {

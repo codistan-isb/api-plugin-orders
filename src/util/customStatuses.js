@@ -75,6 +75,8 @@ export async function onUpdateOrder(order, context, updatedBy) {
         await OnRefundedNotification(order, context)
     } else if (order.workflow && order.workflow.status === "Refund_In_Process") {
         await OnRefundInProcessNotification(order, context)
+    } else if (order.workflow && order.workflow.status === "Completed") {
+        await onCompleteNotification(order, context)
     } else {
         console.log("Unhandled order status:", order.workflow.status);
     }
@@ -329,4 +331,11 @@ async function OnRefundInProcessNotification(order, context) {
     // console.log("BUYER MESSAGE", buyerMessage);
 
     await sendMessage(context, null, buyerMessage, order?.shipping?.[0]?.address?.phone);
+}
+
+
+async function onCompleteNotification(order) {
+    console.log("ORDER COMPLETED NOTIFICATION")
+    // console.log("ORDER COMPLETED NOTIFICATION", order)
+    return order
 }
