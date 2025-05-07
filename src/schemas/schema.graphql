@@ -476,6 +476,10 @@ type OrderItem implements Node {
 
   tracking_URL: String
 
+  pickupCharge: Float
+
+  amountAfterPickupCharge: Float
+
   "The date and time at which the order item was created"
   createdAt: DateTime!
 
@@ -977,6 +981,8 @@ input UpdateOrderItemInput {
   courier_Name: String
 
   tracking_URL: String
+
+  pickupCharge: Float
 }
 
 enum subOrderStatus {
@@ -984,6 +990,7 @@ enum subOrderStatus {
   Confirmed
   RTS_Cancelled
   Cancelled
+  Completed
   Out_Of_Stock
   Quality_Issue
   Pickup_Generated

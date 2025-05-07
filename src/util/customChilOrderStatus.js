@@ -52,6 +52,8 @@ export async function customSuborderStatus(subOrder, context, itemId) {
         await OnQualityApprovedNotification(subOrder, context, itemId)
     } else if (subOrder.workflow && subOrder.workflow.status === "Return_Received") {
         await OnReturnReceivedNotification(subOrder, context, itemId)
+    } else if (subOrder.workflow && subOrder.workflow.status === "Completed") {
+        await onCompleteNotification(subOrder, context, productPurchased)
     } else {
         console.log("Unhandled order status:", subOrder.workflow.status);
     }
@@ -805,4 +807,11 @@ async function OnReturnReceivedNotification(order, context, itemId) {
         `Bizb Team`;
     // console.log("BUYER MESSAGE:", buyerMessage)
     await sendMessage(context, null, buyerMessage, order?.shipping[0]?.address?.phone);
+}
+
+
+async function onCompleteNotification(order, context, itemId) {
+    console.log("ORDER COMPLETED NOTIFICATION")
+    // console.log("ORDER COMPLETED NOTIFICATION", order)
+    return order
 }

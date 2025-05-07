@@ -811,6 +811,14 @@ export const OrderItem = new SimpleSchema({
     type: String,
     optional: true,
   },
+  pickupCharge: {
+    type: Number,
+    optional: true,
+  },
+  amountAfterPickupCharge: {
+    type: Number,
+    optional: true,
+  },
   createdAt: Date,
   documents: {
     type: Array,

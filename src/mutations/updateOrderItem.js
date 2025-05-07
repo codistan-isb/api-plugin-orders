@@ -30,6 +30,11 @@ const inputSchema = new SimpleSchema({
   tracking_URL: {
     type: String,
     optional: true
+  },
+
+  pickupCharge: {
+    type: Number,
+    optional: true
   }
 
 });
@@ -61,12 +66,12 @@ export default async function updateOrderItem(context, input) {
     reason,
     tracking,
     courier_Name,
-    tracking_URL
+    tracking_URL,
+    pickupCharge
   } = input;
-  console.log("updateOrderItem", status)
+
   const { accountId, appEvents, collections, userId } = context;
   const { Orders } = collections;
-
 
   // console.log("APPP EVENTS IN THE UPDATE ORDER ITEMS", appEvents)
 
@@ -128,7 +133,10 @@ export default async function updateOrderItem(context, input) {
         ...(reason !== undefined && { cancelReason: reason }),
         ...(tracking !== undefined && { tracking: tracking }),
         ...(courier_Name !== undefined && { courier_Name: courier_Name }),
-        ...(tracking_URL !== undefined && { tracking_URL: tracking_URL })
+        ...(tracking_URL !== undefined && { tracking_URL: tracking_URL }),
+        ...(pickupCharge !== undefined && { pickupCharge: pickupCharge }),
+        ...(pickupCharge !== undefined && { amountAfterPickupCharge: item.subtotal - pickupCharge })
+
         // quantity: cancelQuantity
       };
 
