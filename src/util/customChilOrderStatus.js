@@ -2,10 +2,12 @@ import getProductbyId from "./getProductbyId.js";
 import { sendMessage } from "./sendMessage.js"
 
 export async function customSuborderStatus(subOrder, context, itemId) {
-    let productPurchased = await getProductbyId(context, { productId: subOrder?.shipping[0]?.items[0]?.variantId });
+    let productPurchased = await getProductbyId(context, { productId: subOrder?.shipping[0]?.items[0]?.productId });
 
-    if (subOrder.workflow && subOrder.workflow.status === "RTS_Cancelled") {
-        await orerCancelNotification(subOrder, context, itemId, productPurchased)
+    if (subOrder.workflow && subOrder.workflow.status === "Cancelled") {
+        await orderCancelNotification(subOrder, context, itemId, productPurchased)
+    } else if (subOrder.workflow && subOrder.workflow.status === "Confirmed") {
+        await onConfirmNotification(subOrder, context, itemId)
     } else if (subOrder.workflow && subOrder.workflow.status === "Out_Of_Stock") {
         await onOutofStockNotification(subOrder, context, itemId)
     } else if (subOrder.workflow && subOrder.workflow.status === "Quality_Issue") {
@@ -47,7 +49,7 @@ export async function customSuborderStatus(subOrder, context, itemId) {
     } else if (subOrder.workflow && subOrder.workflow.status === "Refunded") {
         await OnRefundedNotification(subOrder, context, itemId)
     } else if (subOrder.workflow && subOrder.workflow.status === "Refund_In_Process") {
-        await OnRefundInProcessNotification(subOrder, context, productPurchased)
+        await OnRefundInProcessNotification(subOrder, context, itemId)
     } else if (subOrder.workflow && subOrder.workflow.status === "Quality_Approved") {
         await OnQualityApprovedNotification(subOrder, context, itemId)
     } else if (subOrder.workflow && subOrder.workflow.status === "Return_Received") {
@@ -63,19 +65,15 @@ export async function customSuborderStatus(subOrder, context, itemId) {
     // }
 }
 
-
-async function orerCancelNotification(order, context, itemId) {
+async function orderCancelNotification(order, context, itemId) {
     const { collections } = context;
     const { SimpleInventory } = collections;
 
     const shippingArray = order.shipping[0];
     const result = shippingArray.items;
     const matchedItem = result.find(item => item._id === itemId);
-    // console.log("RESULT in the SUB ORDER", matchedItem)
-    const { productId, productSlug } = matchedItem;
 
-    // console.log("PRODUCT ID IN THE SUB ORDER", productId)
-
+    const { productId, productSlug, productVendor, sellerId } = matchedItem;
 
     await SimpleInventory.updateOne(
         { 'productConfiguration.productId': productId },
@@ -84,14 +82,13 @@ async function orerCancelNotification(order, context, itemId) {
 
     await context.mutations.publishProducts(context, [productId]);
 
-    // Build dynamic values
     const customerName = order?.shipping[0]?.address?.fullName || "Customer";
     const orderId = order?.referenceId || "N/A";
     const cancellationDate = new Date().toLocaleDateString();
     const orderLink = `https://bizb.store/en/checkout/order?orderId=${orderId}`;
-    const productLink = `https://bizb.store/en/product/${productSlug}`; // Assuming your product URL structure like this
+    const productLink = `https://bizb.store/en/product/${productSlug}`;
 
-    // Updated buyer message
+    // Buyer message
     const buyerMessage =
         `Subject: Order ${orderId} Cancellation Confirmation\n\n` +
         `Dear ${customerName},\n\n` +
@@ -103,9 +100,44 @@ async function orerCancelNotification(order, context, itemId) {
         `Thank you for considering BizB, and we hope to have the opportunity to serve you in the future.\n\n` +
         `Best regards,\nBizB Team`;
 
-    // console.log("BUYER MESSAGE", buyerMessage)
-
     await sendMessage(context, null, buyerMessage, order?.shipping[0]?.address?.phone);
+
+    // Seller message
+    const sellerMsg =
+        `Subject: Order Cancellation Notification\n\n` +
+        `Dear ${productVendor || "Seller"},\n\n` +
+        `We regret to inform you that the order ${orderId} placed for your item ${productLink} on BizB has been cancelled by the buyer. We understand that this may be disappointing, but rest assured, your item will be restocked on our platform for potential buyers.\n\n` +
+        `Thank you for your understanding. If you have any questions or concerns, please feel free to reach out to us.\n\n` +
+        `Best regards,\nBizB Team`;
+
+    await sendMessage(context, null, sellerMsg, sellerId);
+}
+
+async function onConfirmNotification(order, context, itemId) {
+
+    const shippingArray = order.shipping[0];
+    const result = shippingArray.items;
+    const matchedItem = result.find(item => item._id === itemId);
+    // console.log("RESULT in the SUB ORDER", matchedItem)
+    const { productSlug, productVendor, sellerId } = matchedItem;
+
+    let orderId = order?.referenceId || "N/A";
+    let productLink = `https://bizb.store/en/product/${productSlug}`;
+
+    let sellerMessage =
+        "Subject: Your Item Has Been Purchased!\n\n" +
+        `Dear ${productVendor},\n\n` +
+        "We're excited to inform you that one of your listed items on BizB has been purchased by a buyer! Congratulations on your sale!\n" +
+        `Please ensure that the item ${productLink} in the order ${orderId} is neat and clean and ready for pickup by our logistics partner. ` +
+        "The rider will visit to collect the article from your specified location. Kindly have the item packed securely and ready for handover.\n\n" +
+        "Thank you for choosing BizB as your platform for selling preloved fashion. If you have any questions or need assistance, feel free to reach out to our seller support team.\n\n" +
+        "Best regards,\n" +
+        "BizB Team";
+
+    // console.log("SELLER MESSAGE: ", sellerMessage);
+
+    await sendMessage(context, sellerId, sellerMessage, null);
+
 }
 
 async function onOutofStockNotification(order, context, itemId) {
@@ -139,7 +171,7 @@ async function onOutofStockNotification(order, context, itemId) {
         `Hi ${customerName},\n\n` +
         `We regret to inform you that your item(s) from order ${orderId} is currently out of stock. We sincerely apologize for any inconvenience this may have caused.\n\n` +
         `View your order: ${orderLink}\n` +
-        `${productLink}\n` +
+        `Out of Stock Item:${productLink}\n` +
         `Our inventory is regularly updated, and we encourage you to visit our store to explore a wide range of other exciting products that might interest you.\n` +
         `Visit our store: ${homeLink}\n\n` +
         `If you have any questions or need further assistance, please don’t hesitate to reach out to our customer support team—we’re here to help!\n\n` +
@@ -163,18 +195,18 @@ async function onQualityIssueNotification(order, context, itemId) {
     const productUrl = `https://bizb.store/product/${productSlug}`;
     const orderId = order?.referenceId || "N/A";
 
-    await Products.findOneAndUpdate(
-        { _id: productId },
-        {
-            $set: {
-                isVisible: false,
-                updatedAt: new Date()
-            }
-        },
-        { returnOriginal: false }
-    );
+    // await Products.findOneAndUpdate(
+    //     { _id: productId },
+    //     {
+    //         $set: {
+    //             isVisible: false,
+    //             updatedAt: new Date()
+    //         }
+    //     },
+    //     { returnOriginal: false }
+    // );
 
-    await context.mutations.publishProducts(context, [productId]);
+    // await context.mutations.publishProducts(context, [productId]);
 
     // New seller message
     const sellerMessage =
@@ -247,6 +279,9 @@ async function onDispatchedChildNotification(order, context, itemId, productPurc
     const productUrl = `https://bizb.store/product/${productSlug}`;
     const orderId = order?.referenceId || "N/A";
 
+    const orderPageUrl = `https://bizb.store/en/checkout/order?orderId=${orderId}`;
+    console.log("PRODUCT PURCHASE ====", productPurchased)
+
     // New Seller Message
     const sellerMessage =
         `Subject: Your item ${productUrl} Is Dispatched\n\n` +
@@ -258,16 +293,20 @@ async function onDispatchedChildNotification(order, context, itemId, productPurc
 
     // console.log("SELLER MESSAGE:", sellerMessage)
 
+    // console.log("SELLER IF ID", sellerId)
+
     await sendMessage(context, sellerId, sellerMessage, null);
 
     const productRef = productPurchased?.referenceId || "Product";
 
+    // console.log("PRODUCT REF", productRef)
+
     // New Buyer Message
     const buyerMessage =
-        `Subject: Your item ${productRef} Is Dispatched\n\n` +
+        `Subject: Your item ${productUrl} Is Dispatched\n\n` +
         `Hi ${customerName},\n` +
-        `We're excited to let you know that the item ${productRef} from your order ${orderId} has been dispatched! It's on its way to you. The estimated delivery time is 3 to 4 working days.\n` +
-        `View your order: https://bizb.store/order/${orderId}\n\n` +
+        `We're excited to let you know that the item ${productUrl} from your order ${orderId} has been dispatched! It's on its way to you. The estimated delivery time is 3 to 4 working days.\n` +
+        `View your order: ${orderPageUrl}\n\n` +
         `Please check this ${tracking} (${courier_Name}), so you can keep an eye on the progress of your order.\n` +
         `Tracking link: ${tracking_URL}\n\n` +
         `If you have any questions or need further assistance, feel free to contact our customer support.\n\n` +
@@ -341,7 +380,8 @@ async function onDispatchedOnMPNotification(order, context, itemId, productPurch
     const result = shippingArray.items;
     const matchedItem = result.find(item => item._id === itemId);
     // console.log("RESULT in the SUB ORDER", matchedItem)
-    const { tracking_URL, tracking, courier_Name } = matchedItem;
+    const { tracking_URL, tracking, courier_Name, productSlug } = matchedItem;
+    const productURL = `https://bizb.store/product/${productSlug}`;
 
     // console.log("Purchased Product", productPurchased)
 
@@ -351,9 +391,9 @@ async function onDispatchedOnMPNotification(order, context, itemId, productPurch
     const orderPageUrl = `https://bizb.store/en/checkout/order?orderId=${orderId}`;
 
     const buyerMessage =
-        `Subject: Your Item ${productRef} Is Dispatched\n\n` +
+        `Subject: Your Item ${productURL} Is Dispatched\n\n` +
         `Hi ${customerName},\n\n` +
-        `We're excited to let you know that your item ${productRef} from your order ${orderId} has been dispatched! It's on its way to you. The estimated delivery time is 3 to 4 working days.\n` +
+        `We're excited to let you know that your item ${productURL} from your order ${orderId} has been dispatched! It's on its way to you. The estimated delivery time is 3 to 4 working days.\n` +
         `View your order: ${orderPageUrl}\n\n` +
         `Please check this (Tracking number: ${tracking}, Courier: ${courier_Name}), so you can keep an eye on the progress of your order.\n` +
         `Tracking link: ${tracking_URL}\n\n` +
@@ -371,19 +411,19 @@ async function onDispatchedOnTCSNotification(order, context, itemId, productPurc
     const result = shippingArray.items;
     const matchedItem = result.find(item => item._id === itemId);
     // console.log("RESULT in the SUB ORDER", matchedItem)
-    const { tracking_URL, tracking, courier_Name } = matchedItem;
+    const { tracking_URL, tracking, courier_Name, productSlug } = matchedItem;
 
     // console.log("Purchased Product", productPurchased)
 
     const customerName = order?.shipping[0]?.address?.fullName || "Customer";
     const orderId = order?.referenceId || "N/A";
-    const productRef = productPurchased?.referenceId || "Product";
     const orderPageUrl = `https://bizb.store/en/checkout/order?orderId=${orderId}`;
+    const productURL = `https://bizb.store/product/${productSlug}`;
 
     const buyerMessage =
-        `Subject: Your Item ${productRef} Is Dispatched\n\n` +
+        `Subject: Your Item ${productURL} Is Dispatched\n\n` +
         `Hi ${customerName},\n\n` +
-        `We're excited to let you know that your item ${productRef} from your order ${orderId} has been dispatched! It's on its way to you. The estimated delivery time is 3 to 4 working days.\n` +
+        `We're excited to let you know that your item ${productURL} from your order ${orderId} has been dispatched! It's on its way to you. The estimated delivery time is 3 to 4 working days.\n` +
         `View your order: ${orderPageUrl}\n\n` +
         `Please check this (Tracking number: ${tracking}, Courier: ${courier_Name}), so you can keep an eye on the progress of your order.\n` +
         `Tracking link: ${tracking_URL}\n\n` +
@@ -401,7 +441,7 @@ async function onDipatchedOnLeopardNotification(order, context, itemId, productP
     const result = shippingArray.items;
     const matchedItem = result.find(item => item._id === itemId);
     // console.log("RESULT in the SUB ORDER", matchedItem)
-    const { tracking_URL, tracking, courier_Name } = matchedItem;
+    const { tracking_URL, tracking, courier_Name, productSlug } = matchedItem;
 
     // console.log("Purchased Product", productPurchased)
 
@@ -409,11 +449,12 @@ async function onDipatchedOnLeopardNotification(order, context, itemId, productP
     const orderId = order?.referenceId || "N/A";
     const productRef = productPurchased?.referenceId || "Product";
     const orderPageUrl = `https://bizb.store/en/checkout/order?orderId=${orderId}`;
+    const productUrl = `https://bizb.store/product/${productSlug}`
 
     const buyerMessage =
-        `Subject: Your Item ${productRef} Is Dispatched\n\n` +
+        `Subject: Your Item ${productUrl} Is Dispatched\n\n` +
         `Hi ${customerName},\n\n` +
-        `We're excited to let you know that your item ${productRef} from your order ${orderId} has been dispatched! It's on its way to you. The estimated delivery time is 3 to 4 working days.\n` +
+        `We're excited to let you know that your item ${productUrl} from your order ${orderId} has been dispatched! It's on its way to you. The estimated delivery time is 3 to 4 working days.\n` +
         `View your order: ${orderPageUrl}\n\n` +
         `Please check this (Tracking number: ${tracking}, Courier: ${courier_Name}), so you can keep an eye on the progress of your order.\n` +
         `Tracking link: ${tracking_URL}\n\n` +
@@ -431,7 +472,7 @@ async function onDispatchedOnDaewooNotification(order, context, itemId, productP
     const result = shippingArray.items;
     const matchedItem = result.find(item => item._id === itemId);
     // console.log("RESULT in the SUB ORDER", matchedItem)
-    const { tracking_URL, tracking, courier_Name } = matchedItem;
+    const { tracking_URL, tracking, courier_Name, productSlug } = matchedItem;
 
     // console.log("Purchased Product", productPurchased)
 
@@ -439,11 +480,12 @@ async function onDispatchedOnDaewooNotification(order, context, itemId, productP
     const orderId = order?.referenceId || "N/A";
     const productRef = productPurchased?.referenceId || "Product";
     const orderPageUrl = `https://bizb.store/en/checkout/order?orderId=${orderId}`;
+    const productUrl = `https://bizb.store/product/${productSlug}`
 
     const buyerMessage =
-        `Subject: Your Item ${productRef} Is Dispatched\n\n` +
+        `Subject: Your Item ${productUrl} Is Dispatched\n\n` +
         `Hi ${customerName},\n\n` +
-        `We're excited to let you know that your item ${productRef} from your order ${orderId} has been dispatched! It's on its way to you. The estimated delivery time is 3 to 4 working days.\n` +
+        `We're excited to let you know that your item ${productUrl} from your order ${orderId} has been dispatched! It's on its way to you. The estimated delivery time is 3 to 4 working days.\n` +
         `View your order: ${orderPageUrl}\n\n` +
         `Please check this (Tracking number: ${tracking}, Courier: ${courier_Name}), so you can keep an eye on the progress of your order.\n` +
         `Tracking link: ${tracking_URL}\n\n` +
@@ -461,7 +503,7 @@ async function onDispatchedOnPostexNotification(order, context, itemId, productP
     const result = shippingArray.items;
     const matchedItem = result.find(item => item._id === itemId);
     // console.log("RESULT in the SUB ORDER", matchedItem)
-    const { tracking_URL, tracking, courier_Name } = matchedItem;
+    const { tracking_URL, tracking, courier_Name, productSlug } = matchedItem;
 
     // console.log("Purchased Product", productPurchased)
 
@@ -469,11 +511,12 @@ async function onDispatchedOnPostexNotification(order, context, itemId, productP
     const orderId = order?.referenceId || "N/A";
     const productRef = productPurchased?.referenceId || "Product";
     const orderPageUrl = `https://bizb.store/en/checkout/order?orderId=${orderId}`;
+    const productUrl = `https://bizb.store/product/${productSlug}`
 
     const buyerMessage =
-        `Subject: Your Item ${productRef} Is Dispatched\n\n` +
+        `Subject: Your Item ${productUrl} Is Dispatched\n\n` +
         `Hi ${customerName},\n\n` +
-        `We're excited to let you know that your item ${productRef} from your order ${orderId} has been dispatched! It's on its way to you. The estimated delivery time is 3 to 4 working days.\n` +
+        `We're excited to let you know that your item ${productUrl} from your order ${orderId} has been dispatched! It's on its way to you. The estimated delivery time is 3 to 4 working days.\n` +
         `View your order: ${orderPageUrl}\n\n` +
         `Please check this (Tracking number: ${tracking}, Courier: ${courier_Name}), so you can keep an eye on the progress of your order.\n` +
         `Tracking link: ${tracking_URL}\n\n` +
@@ -491,7 +534,7 @@ async function onDispatchedOnTraxNotification(order, context, itemId, productPur
     const result = shippingArray.items;
     const matchedItem = result.find(item => item._id === itemId);
     // console.log("RESULT in the SUB ORDER", matchedItem)
-    const { tracking_URL, tracking, courier_Name } = matchedItem;
+    const { tracking_URL, tracking, courier_Name, productSlug } = matchedItem;
 
     // console.log("Purchased Product", productPurchased)
 
@@ -499,11 +542,12 @@ async function onDispatchedOnTraxNotification(order, context, itemId, productPur
     const orderId = order?.referenceId || "N/A";
     const productRef = productPurchased?.referenceId || "Product";
     const orderPageUrl = `https://bizb.store/en/checkout/order?orderId=${orderId}`;
+    const productUrl = `https://bizb.store/product/${productSlug}`
 
     const buyerMessage =
-        `Subject: Your Item ${productRef} Is Dispatched\n\n` +
+        `Subject: Your Item ${productUrl} Is Dispatched\n\n` +
         `Hi ${customerName},\n\n` +
-        `We're excited to let you know that your item ${productRef} from your order ${orderId} has been dispatched! It's on its way to you. The estimated delivery time is 3 to 4 working days.\n` +
+        `We're excited to let you know that your item ${productUrl} from your order ${orderId} has been dispatched! It's on its way to you. The estimated delivery time is 3 to 4 working days.\n` +
         `View your order: ${orderPageUrl}\n\n` +
         `Please check this (Tracking number: ${tracking}, Courier: ${courier_Name}), so you can keep an eye on the progress of your order.\n` +
         `Tracking link: ${tracking_URL}\n\n` +
@@ -521,7 +565,7 @@ async function onDispatchedOnPentaNotification(order, context, itemId, productPu
     const result = shippingArray.items;
     const matchedItem = result.find(item => item._id === itemId);
     // console.log("RESULT in the SUB ORDER", matchedItem)
-    const { tracking_URL, tracking, courier_Name } = matchedItem;
+    const { tracking_URL, tracking, courier_Name, productSlug } = matchedItem;
 
     // console.log("Purchased Product", productPurchased)
 
@@ -529,11 +573,12 @@ async function onDispatchedOnPentaNotification(order, context, itemId, productPu
     const orderId = order?.referenceId || "N/A";
     const productRef = productPurchased?.referenceId || "Product";
     const orderPageUrl = `https://bizb.store/en/checkout/order?orderId=${orderId}`;
+    const productUrl = `https://bizb.store/product/${productSlug}`
 
     const buyerMessage =
-        `Subject: Your Item ${productRef} Is Dispatched\n\n` +
+        `Subject: Your Item ${productUrl} Is Dispatched\n\n` +
         `Hi ${customerName},\n\n` +
-        `We're excited to let you know that your item ${productRef} from your order ${orderId} has been dispatched! It's on its way to you. The estimated delivery time is 3 to 4 working days.\n` +
+        `We're excited to let you know that your item ${productUrl} from your order ${orderId} has been dispatched! It's on its way to you. The estimated delivery time is 3 to 4 working days.\n` +
         `View your order: ${orderPageUrl}\n\n` +
         `Please check this (Tracking number: ${tracking}, Courier: ${courier_Name}), so you can keep an eye on the progress of your order.\n` +
         `Tracking link: ${tracking_URL}\n\n` +
@@ -740,15 +785,21 @@ async function OnRefundedNotification(order, context, itemId) {
     await sendMessage(context, null, buyerMessage, order?.shipping[0]?.address?.phone);
 }
 
-async function OnRefundInProcessNotification(order, context) {
+async function OnRefundInProcessNotification(order, context, itemId) {
+    const shippingArray = order.shipping[0];
+    const result = shippingArray.items;
+    const matchedItem = result.find(item => item._id === itemId);
+    const { productSlug } = matchedItem;
     const customerName = order?.shipping?.[0]?.address?.fullName || 'Customer';
     const orderId = order?.referenceId || 'N/A';
     const orderLink = `https://bizb.store/en/checkout/order?orderId=${orderId}`;
+    const productUrl = `https://bizb.store/product/${productSlug}`;
+
 
     const buyerMessage =
         `Subject: Refund Process Update for Your Item\n\n` +
         `Hi ${customerName},\n\n` +
-        `We hope you're doing well. We wanted to inform you that the refund for the item from your order ${orderId} is currently in process.\n` +
+        `We hope you're doing well. We wanted to inform you that the refund for the item from your order ${productUrl} is currently in process.\n` +
         `View your order: ${orderLink}\n\n` +
         `As soon as the refund is completed, we will notify you immediately. If you have any questions in the meantime, feel free to reach out.\n\n` +
         `Thank you for your patience and understanding! 😊\n\n` +
@@ -774,7 +825,7 @@ async function OnQualityApprovedNotification(order, context, itemId) {
     let sellerMessage =
         'Subject: Your Article is Ready for Dispatch!\n\n' +
         `Hi ${productVendor},\n\n` +
-        `Great news! Your article [${productLink}] in the order [${orderLink}] has successfully passed our quality check process on Bizb 🎉. It is now ready to be dispatched to the customer.\n\n` +
+        `Great news! Your article [${productLink}] in the order [${orderId}] has successfully passed our quality check process on Bizb 🎉. It is now ready to be dispatched to the customer.\n\n` +
         `If you have any questions or need further assistance, please don’t hesitate to reach out to our support team.\n\n` +
         `Thank you for your commitment to quality! 😊\n\n` +
         `Best regards,\n` +
@@ -787,28 +838,29 @@ async function OnQualityApprovedNotification(order, context, itemId) {
 
 
 async function OnReturnReceivedNotification(order, context, itemId) {
-
     const shippingArray = order.shipping[0];
     const result = shippingArray.items;
     const matchedItem = result.find(item => item._id === itemId);
-    // console.log("RESULT in the SUB ORDER", matchedItem)
+
     const { productSlug } = matchedItem;
     const orderId = order?.referenceId || 'N/A';
+    const customerName = shippingArray?.address?.fullName || 'Customer';
+    console.log("CUSTOMER NAME", customerName)
     const orderLink = `https://bizb.store/en/checkout/order?orderId=${orderId}`;
+    const productLink = productSlug ? `https://bizb.store/product/${productSlug}` : 'Product';
 
-    const productLink = productSlug ? `https://bizb.store/product/${productSlug}` : 'your item';
     let buyerMessage =
         'Subject: Update on Your Returned Item\n\n' +
-        `Hi ${order?.shipping[0]?.address?.fullName},\n\n` +
-        `We hope you're doing well. We wanted to let you know that the item [${productLink}] from your order [${orderLink}] that you had canceled has been received back at our office.\n\n` +
+        `Hi ${customerName},\n\n` +
+        `We hope you're doing well. We wanted to let you know that the item [${productLink}] from your order [${orderId}] had canceled has been received back at our office.\n\n` +
+        `View your order: ${orderLink}\n\n` +
         `If you have any questions or need further assistance, please feel free to reach out.\n\n` +
         `Thank you for shopping with us, and we hope to serve you again in the future! 😊\n\n` +
         `Best regards,\n` +
         `Bizb Team`;
     // console.log("BUYER MESSAGE:", buyerMessage)
-    await sendMessage(context, null, buyerMessage, order?.shipping[0]?.address?.phone);
+    await sendMessage(context, null, buyerMessage, shippingArray?.address?.phone);
 }
-
 
 async function onCompleteNotification(order, context, itemId) {
     console.log("ORDER COMPLETED NOTIFICATION")

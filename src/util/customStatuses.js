@@ -20,7 +20,7 @@ export async function onCreateOrder(order, context, createdBy) {
     const orderId = order?.referenceId || "N/A";
     const orderLink = `https://bizb.storeen/checkout/order?orderId=${orderId}`;
     const storeLink = `https://bizb.store`;
-    const orderSummary = await generateOrderSummary(order?.shipping[0]?.items);
+    // const orderSummary = await generateOrderSummary(order?.shipping[0]?.items);
 
     let buyerMessage =
         `Subject: Your Order ${orderId} is Placed\n\n` +
@@ -28,7 +28,7 @@ export async function onCreateOrder(order, context, createdBy) {
         `Thank you for your purchase! Your order is placed successfully. Please note that the order delivery process may take 7-10 working days.\n\n` +
         `View your order: ${orderLink}\n` +
         `Visit our store: ${storeLink}\n\n` +
-        `Order Summary:\n${orderSummary}\n\n` +
+        // `Order Summary:\n${orderSummary}\n\n` +
         `Please respond to this message for confirmation by typing "confirmed". If you have any questions or need further assistance, feel free to contact our customer support at hello@bizb.store.\n\n` +
         `Best regards,\nBizB Team`;
 

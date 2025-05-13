@@ -988,7 +988,6 @@ input UpdateOrderItemInput {
 enum subOrderStatus {
   New
   Confirmed
-  RTS_Cancelled
   Cancelled
   Completed
   Out_Of_Stock
