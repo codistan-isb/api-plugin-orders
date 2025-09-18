@@ -8,16 +8,20 @@ import summary from "./summary.js";
 export default {
   _id: (node) => encodeOrderFulfillmentGroupOpaqueId(node._id),
   data(node) {
-    console.log("shipping",node.address);
     if (node.type === "shipping") {
-      return { gqlType: "ShippingOrderFulfillmentGroupData", shippingAddress: node.address};
+      return {
+        gqlType: "ShippingOrderFulfillmentGroupData",
+        shippingAddress: node.address,
+      };
     }
     return null;
   },
-  displayStatus: (node, { language }, context) => fulfillmentGroupDisplayStatus(context, node, language),
+  displayStatus: (node, { language }, context) =>
+    fulfillmentGroupDisplayStatus(context, node, language),
   items,
-  selectedFulfillmentOption: (node) => xformOrderFulfillmentGroupSelectedOption(node.shipmentMethod, node),
+  selectedFulfillmentOption: (node) =>
+    xformOrderFulfillmentGroupSelectedOption(node.shipmentMethod, node),
   shop: resolveShopFromShopId,
   status: (node) => node.workflow.status,
-  summary
+  summary,
 };

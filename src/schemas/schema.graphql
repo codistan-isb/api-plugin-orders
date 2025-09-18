@@ -642,6 +642,8 @@ type OrderFulfillmentGroup implements Node {
   paymentMethod: String
 
   transactionDetailsId: String
+
+  isPaid: String
 }
 
 type workflowStatus {
@@ -731,6 +733,8 @@ type Order implements Node {
   comments: [Comment]
 
   paymentMethod: String
+
+  isPaid: String
 }
 
 # type addedInfo {
