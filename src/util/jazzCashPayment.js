@@ -33,7 +33,7 @@ export default async function jazzCashPayment(
   console.log("cnicNo", cnicNo);
 
   const url =
-    "https://payments.jazzcash.com.pk/ApplicationAPI/API/2.0/Purchase/DoMWalletTransaction";
+    "https://sandbox.jazzcash.com.pk/ApplicationAPI/API/2.0/Purchase/DoMWalletTransaction";
   const merchantId = "MC150326";
   const password = "fy8d58bxg0";
   const integritySalt = "vw68g1t9xf";
