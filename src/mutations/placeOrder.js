@@ -7,16 +7,21 @@ import ReactionError from "@reactioncommerce/reaction-error";
 import getAnonymousAccessToken from "@reactioncommerce/api-utils/getAnonymousAccessToken.js";
 import buildOrderFulfillmentGroupFromInput from "../util/buildOrderFulfillmentGroupFromInput.js";
 import verifyPaymentsMatchOrderTotal from "../util/verifyPaymentsMatchOrderTotal.js";
-import { Order as OrderSchema, orderInputSchema, Payment as PaymentSchema, paymentInputSchema } from "../simpleSchemas.js";
+import {
+  Order as OrderSchema,
+  orderInputSchema,
+  Payment as PaymentSchema,
+  paymentInputSchema,
+} from "../simpleSchemas.js";
 import jazzCashPayment from "../util/jazzCashPayment.js";
 
 const inputSchema = new SimpleSchema({
-  "order": orderInputSchema,
-  "payments": {
+  order: orderInputSchema,
+  payments: {
     type: Array,
-    optional: true
+    optional: true,
   },
-  "payments.$": paymentInputSchema
+  "payments.$": paymentInputSchema,
 });
 
 /**
@@ -41,10 +46,8 @@ async function createPayments({
   orderTotal,
   paymentsInput,
   shippingAddress,
-  shop
+  shop,
 }) {
-
-
   // console.log("SHOP IN THE PLACE ORDER", shop)
   // Determining which payment methods are enabled for the shop
   const availablePaymentMethods = shop.availablePaymentMethods || [];
@@ -61,37 +64,47 @@ async function createPayments({
 
     // Verify that this payment method is enabled for the shop
     if (!availablePaymentMethods.includes(methodName)) {
-      throw new ReactionError("payment-failed", `Payment method not enabled for this shop: ${methodName}`);
+      throw new ReactionError(
+        "payment-failed",
+        `Payment method not enabled for this shop: ${methodName}`
+      );
     }
 
     // Grab config for this payment method
     let paymentMethodConfig;
     try {
-      paymentMethodConfig = context.queries.getPaymentMethodConfigByName(methodName);
+      paymentMethodConfig =
+        context.queries.getPaymentMethodConfigByName(methodName);
     } catch (error) {
       Logger.error(error);
-      throw new ReactionError("payment-failed", `Invalid payment method name: ${methodName}`);
+      throw new ReactionError(
+        "payment-failed",
+        `Invalid payment method name: ${methodName}`
+      );
     }
 
     // Authorize this payment
-    const payment = await paymentMethodConfig.functions.createAuthorizedPayment(context, {
-      accountId, // optional
-      amount,
-      billingAddress: paymentInput.billingAddress || billingAddress,
-      currencyCode,
-      email,
-      shippingAddress, // optional, for fraud detection, the first shipping address if shipping to multiple
-      shopId: shop._id,
-      paymentData: {
-        ...(paymentInput.data || {})
-      } // optional, object, blackbox
-    });
+    const payment = await paymentMethodConfig.functions.createAuthorizedPayment(
+      context,
+      {
+        accountId, // optional
+        amount,
+        billingAddress: paymentInput.billingAddress || billingAddress,
+        currencyCode,
+        email,
+        shippingAddress, // optional, for fraud detection, the first shipping address if shipping to multiple
+        shopId: shop._id,
+        paymentData: {
+          ...(paymentInput.data || {}),
+        }, // optional, object, blackbox
+      }
+    );
 
     const paymentWithCurrency = {
       ...payment,
       // This is from previous support for exchange rates, which was removed in v3.0.0
       currency: { exchangeRate: 1, userCurrency: currencyCode },
-      currencyCode
+      currencyCode,
     };
 
     PaymentSchema.validate(paymentWithCurrency);
@@ -108,36 +121,37 @@ async function createPayments({
     // console.log("PAYMENTS IN SIDE CHECK AFTER FILTER", payments)
   } catch (error) {
     Logger.error("createOrder: error creating payments", error.message);
-    throw new ReactionError("payment-failed", `There was a problem authorizing this payment: ${error.message}`);
+    throw new ReactionError(
+      "payment-failed",
+      `There was a problem authorizing this payment: ${error.message}`
+    );
   }
 
   return payments;
 }
 async function createChildOrders(context, order) {
-
   const { collections } = context;
   const { Orders, Cart } = collections;
-  const parentFulfillmentGroup = order?.shipping?.[0]
+  const parentFulfillmentGroup = order?.shipping?.[0];
 
   const orderItems = order?.shipping?.[0]?.items;
   let sellerOrders = {};
-  orderItems?.map(order => {
-
+  orderItems?.map((order) => {
     if (sellerOrders[order.sellerId]) {
-
       let sellerOrder = sellerOrders[order.sellerId];
-      sellerOrder.push(order)
-      sellerOrders[order.sellerId] = sellerOrder
+      sellerOrder.push(order);
+      sellerOrders[order.sellerId] = sellerOrder;
     } else {
       let sellerOrder = [order];
-      sellerOrders[order.sellerId] = sellerOrder
+      sellerOrders[order.sellerId] = sellerOrder;
     }
-  })
+  });
   Object.keys(sellerOrders).map(async (key) => {
-
-
     const childItem = sellerOrders[key];
-    const itemTotal = +accounting.toFixed(childItem.reduce((sum, item) => (sum + item.subtotal), 0), 3);
+    const itemTotal = +accounting.toFixed(
+      childItem.reduce((sum, item) => sum + item.subtotal, 0),
+      3
+    );
 
     // Fulfillment
     const shippingTotal = parentFulfillmentGroup.shipmentMethod.rate || 0;
@@ -147,32 +161,41 @@ async function createChildOrders(context, order) {
     // Totals
     // To avoid rounding errors, be sure to keep this calculation the same between here and
     // `buildOrderInputFromCart.js` in the client code.
-    const total = +accounting.toFixed(Math.max(0, itemTotal + fulfillmentTotal), 3);
+    const total = +accounting.toFixed(
+      Math.max(0, itemTotal + fulfillmentTotal),
+      3
+    );
 
-    const childInvoice = { ...parentFulfillmentGroup.invoice, subtotal: itemTotal, total }
+    const childInvoice = {
+      ...parentFulfillmentGroup.invoice,
+      subtotal: itemTotal,
+      total,
+    };
     let fulfillmentObj = {
       ...parentFulfillmentGroup,
       _id: Random.id(),
       items: childItem,
-      itemIds: childItem.map(item => item._id),
-      totalItemQuantity: childItem.reduce((sum, item) => sum + item.quantity, 0),
-      invoice: childInvoice
-
-    }
-    const childFulfillmentGroup = [fulfillmentObj]
+      itemIds: childItem.map((item) => item._id),
+      totalItemQuantity: childItem.reduce(
+        (sum, item) => sum + item.quantity,
+        0
+      ),
+      invoice: childInvoice,
+    };
+    const childFulfillmentGroup = [fulfillmentObj];
     const childOrder = {
       ...order,
       _id: Random.id(),
       referenceId: Random.id(),
       shipping: childFulfillmentGroup,
-      totalItemQuantity: childFulfillmentGroup.reduce((sum, group) => sum + group.totalItemQuantity, 0),
-
-    }
+      totalItemQuantity: childFulfillmentGroup.reduce(
+        (sum, group) => sum + group.totalItemQuantity,
+        0
+      ),
+    };
     OrderSchema.validate(childOrder);
     // await Orders.insertOne({ ...childOrder, parentId: order._id });
-
-  })
-
+  });
 }
 /**
  * @method placeOrder
@@ -194,11 +217,12 @@ export default async function placeOrder(context, input) {
     email,
     fulfillmentGroups,
     ordererPreferredLanguage,
-    shopId
+    shopId,
   } = orderInput;
 
   // console.log("ORDER INPUT===", JSON.stringify(orderInput.fulfillmentGroups, null, 2));
-  const { accountId, appEvents, collections, getFunctionsOfType, userId } = context;
+  const { accountId, appEvents, collections, getFunctionsOfType, userId } =
+    context;
   const { Orders, Cart, Shops, TransactionDetails } = collections;
 
   // console.log("PAYMENT INPU ========T", paymentsInput)
@@ -214,10 +238,12 @@ export default async function placeOrder(context, input) {
   if (cartId) {
     cart = await Cart.findOne({ _id: cartId });
     if (!cart) {
-      throw new ReactionError("not-found", "Cart not found while trying to place order");
+      throw new ReactionError(
+        "not-found",
+        "Cart not found while trying to place order"
+      );
     }
   }
-
 
   // We are mixing concerns a bit here for now. This is for backwards compatibility with current
   // discount codes feature. We are planning to revamp discounts soon, but until then, we'll look up
@@ -225,7 +251,10 @@ export default async function placeOrder(context, input) {
   let discounts = [];
   let discountTotal = 0;
   if (cart) {
-    const discountsResult = await context.queries.getDiscountsTotalForCart(context, cart);
+    const discountsResult = await context.queries.getDiscountsTotalForCart(
+      context,
+      cart
+    );
     ({ discounts } = discountsResult);
     discountTotal = discountsResult.total;
   }
@@ -237,37 +266,40 @@ export default async function placeOrder(context, input) {
   // Create orderId
   const orderId = Random.id();
 
-
   // Add more props to each fulfillment group, and validate/build the items in each group
   let orderTotal = 0;
   let shippingAddressForPayments = null;
-  const finalFulfillmentGroups = await Promise.all(fulfillmentGroups.map(async (inputGroup) => {
-    const { group, groupSurcharges } = await buildOrderFulfillmentGroupFromInput(context, {
-      accountId,
-      billingAddress,
-      cartId,
-      currencyCode,
-      discountTotal,
-      inputGroup,
-      orderId,
-      cart
-    });
+  const finalFulfillmentGroups = await Promise.all(
+    fulfillmentGroups.map(async (inputGroup) => {
+      const { group, groupSurcharges } =
+        await buildOrderFulfillmentGroupFromInput(context, {
+          accountId,
+          billingAddress,
+          cartId,
+          currencyCode,
+          discountTotal,
+          inputGroup,
+          orderId,
+          cart,
+        });
 
-    // We save off the first shipping address found, for passing to payment services. They use this
-    // for fraud detection.
-    if (group.address && !shippingAddressForPayments) shippingAddressForPayments = group.address;
+      // We save off the first shipping address found, for passing to payment services. They use this
+      // for fraud detection.
+      if (group.address && !shippingAddressForPayments)
+        shippingAddressForPayments = group.address;
 
-    // Push all group surcharges to overall order surcharge array.
-    // Currently, we do not save surcharges per group
-    orderSurcharges.push(...groupSurcharges);
+      // Push all group surcharges to overall order surcharge array.
+      // Currently, we do not save surcharges per group
+      orderSurcharges.push(...groupSurcharges);
 
-    // Add the group total to the order total
-    orderTotal += group.invoice.total;
+      // Add the group total to the order total
+      orderTotal += group.invoice.total;
 
-    return group;
-  }));
+      return group;
+    })
+  );
 
-  console.log("FINAL FULFILLMENT GROUPS", finalFulfillmentGroups)
+  console.log("FINAL FULFILLMENT GROUPS", finalFulfillmentGroups);
 
   const payments = await createPayments({
     accountId,
@@ -278,24 +310,43 @@ export default async function placeOrder(context, input) {
     orderTotal,
     paymentsInput,
     shippingAddress: shippingAddressForPayments,
-    shop
+    shop,
   });
 
-
-  console.log("fulfillmentGroups[0].paymentMethod == ", fulfillmentGroups[0].paymentMethod == "JAZZCASH")
+  console.log(
+    "fulfillmentGroups[0].paymentMethod == ",
+    fulfillmentGroups[0].paymentMethod == "JAZZCASH"
+  );
 
   let paymentResposne;
   let transactionDetailsId;
 
-
   if (fulfillmentGroups[0].paymentMethod == "JAZZCASH") {
-    console.log("INSIDE THE JAZZCAHS PYAMENT IF")
-    console.log("INSIDE THE finalFulfillmentGroups IF", finalFulfillmentGroups)
-    paymentResposne = await jazzCashPayment(orderId, orderTotal, finalFulfillmentGroups)
+    console.log("INSIDE THE JAZZCAHS PYAMENT IF");
+    console.log("INSIDE THE finalFulfillmentGroups IF", finalFulfillmentGroups);
+    paymentResposne = await jazzCashPayment(
+      orderId,
+      orderTotal,
+      finalFulfillmentGroups
+    );
 
-    console.log("PAYMENT RESPONSE", paymentResposne)
-    if (fulfillmentGroups[0].paymentMethod == "JAZZCASH" && paymentResposne.pp_ResponseCode == "000") {
-      const { pp_TxnType, pp_Amount, pp_TxnCurrency, pp_TxnDateTime, pp_TxnRefNo, pp_ResponseCode, pp_ResponseMessage, pp_RetreivalReferenceNo, pp_MobileNumber, pp_CNIC } = paymentResposne;
+    console.log("PAYMENT RESPONSE", paymentResposne);
+    if (
+      fulfillmentGroups[0].paymentMethod == "JAZZCASH" &&
+      paymentResposne.pp_ResponseCode == "000"
+    ) {
+      const {
+        pp_TxnType,
+        pp_Amount,
+        pp_TxnCurrency,
+        pp_TxnDateTime,
+        pp_TxnRefNo,
+        pp_ResponseCode,
+        pp_ResponseMessage,
+        pp_RetreivalReferenceNo,
+        pp_MobileNumber,
+        pp_CNIC,
+      } = paymentResposne;
       const document = {
         _id: Random.id(),
         orderId: orderId,
@@ -309,22 +360,23 @@ export default async function placeOrder(context, input) {
         retrievalReferenceNo: pp_RetreivalReferenceNo,
         mobileNumber: pp_MobileNumber,
         CNIC: pp_CNIC,
-        createdAt: new Date()
+        createdAt: new Date(),
       };
       let result = await TransactionDetails.insertOne(document);
       transactionDetailsId = result.insertedId; // Capture the inserted ID
 
-      console.log(`New payment record created with the following id: ${result.insertedId}`);
-      console.log("PAYMENT SUCCESSFUL")
-
+      console.log(
+        `New payment record created with the following id: ${result.insertedId}`
+      );
+      console.log("PAYMENT SUCCESSFUL");
     }
   }
 
-  if (fulfillmentGroups[0].paymentMethod == "JAZZCASH" && paymentResposne.pp_ResponseCode != "000") {
-    throw new ReactionError(
-      "payment-failed",
-      "Payment has been failed"
-    );
+  if (
+    fulfillmentGroups[0].paymentMethod == "JAZZCASH" &&
+    paymentResposne.pp_ResponseCode != "000"
+  ) {
+    throw new ReactionError("payment-failed", "Payment has been failed");
   }
 
   // Create anonymousAccessToken if no account ID
@@ -346,16 +398,18 @@ export default async function placeOrder(context, input) {
     shipping: finalFulfillmentGroups,
     shopId,
     surcharges: orderSurcharges,
-    totalItemQuantity: finalFulfillmentGroups.reduce((sum, group) => sum + group.totalItemQuantity, 0),
+    totalItemQuantity: finalFulfillmentGroups.reduce(
+      (sum, group) => sum + group.totalItemQuantity,
+      0
+    ),
     updatedAt: now,
     workflow: {
       status: "new",
-      workflow: ["new"]
+      workflow: ["new"],
     },
     paymentMethod: fulfillmentGroups[0]?.paymentMethod || null, // Store paymentMethod from fulfillment group
-    transactionDetailsId: transactionDetailsId || null // Store TransactionDetails ID if available
+    transactionDetailsId: transactionDetailsId || null, // Store TransactionDetails ID if available
   };
-
 
   if (fullToken) {
     const dbToken = { ...fullToken };
@@ -365,29 +419,38 @@ export default async function placeOrder(context, input) {
   }
 
   let referenceId;
-  const createReferenceIdFunctions = getFunctionsOfType("createOrderReferenceId");
+  const createReferenceIdFunctions = getFunctionsOfType(
+    "createOrderReferenceId"
+  );
   if (!createReferenceIdFunctions || createReferenceIdFunctions.length === 0) {
     // if the cart has a reference Id, and no custom function is created use that
-    if (_.get(cart, "referenceId")) { // we want the else to fallthrough if no cart to keep the if/else logic simple
+    if (_.get(cart, "referenceId")) {
+      // we want the else to fallthrough if no cart to keep the if/else logic simple
       ({ referenceId } = cart);
-    }
-    else {
+    } else {
       referenceId = Random.id();
     }
   } else {
     referenceId = await createReferenceIdFunctions[0](context, order, cart);
     if (typeof referenceId !== "string") {
-      throw new ReactionError("invalid-parameter", "createOrderReferenceId function returned a non-string value");
+      throw new ReactionError(
+        "invalid-parameter",
+        "createOrderReferenceId function returned a non-string value"
+      );
     }
     if (createReferenceIdFunctions.length > 1) {
-      Logger.warn("More than one createOrderReferenceId function defined. Using first one defined");
+      Logger.warn(
+        "More than one createOrderReferenceId function defined. Using first one defined"
+      );
     }
   }
 
   order.referenceId = newOrderId.toString();
   order.internalOrderId = newOrderId;
   // Apply custom order data transformations from plugins
-  const transformCustomOrderFieldsFuncs = getFunctionsOfType("transformCustomOrderFields");
+  const transformCustomOrderFieldsFuncs = getFunctionsOfType(
+    "transformCustomOrderFields"
+  );
   if (transformCustomOrderFieldsFuncs.length > 0) {
     let customFields = { ...(customFieldsFromClient || {}) };
     // We need to run each of these functions in a series, rather than in parallel, because
@@ -395,7 +458,11 @@ export default async function placeOrder(context, input) {
     // eslint rules when the output of one iteration might be used as input in another iteration, such as this case here.
     // See https://eslint.org/docs/rules/no-await-in-loop#when-not-to-use-it
     for (const transformCustomOrderFieldsFunc of transformCustomOrderFieldsFuncs) {
-      customFields = await transformCustomOrderFieldsFunc({ context, customFields, order }); // eslint-disable-line no-await-in-loop
+      customFields = await transformCustomOrderFieldsFunc({
+        context,
+        customFields,
+        order,
+      }); // eslint-disable-line no-await-in-loop
     }
     order.customFields = customFields;
   } else {
@@ -405,29 +472,36 @@ export default async function placeOrder(context, input) {
   // Validate and save
   OrderSchema.validate(order);
   await Orders.insertOne(order);
-  await Shops.updateOne({ _id: shop._id }, {
-    $set: { lastOrderId: newOrderId }
-  });
+  await Shops.updateOne(
+    { _id: shop._id },
+    {
+      $set: { lastOrderId: newOrderId },
+    }
+  );
   await appEvents.emit("afterOrderCreate", { createdBy: userId, order });
 
-  if (fulfillmentGroups[0]?.paymentMethod === "JAZZCASH" && paymentResposne?.pp_ResponseCode === "000") {
+  if (
+    fulfillmentGroups[0]?.paymentMethod === "JAZZCASH" &&
+    paymentResposne?.pp_ResponseCode === "000"
+  ) {
+    console.log("transactionDetailsId", transactionDetailsId);
+    const transactionDetails = await TransactionDetails.findOne({
+      _id: transactionDetailsId,
+    });
 
-    console.log("transactionDetailsId", transactionDetailsId)
-    const transactionDetails = await TransactionDetails.findOne({ _id: transactionDetailsId });
-
-    console.log("Transaction Details===", transactionDetails)
+    console.log("Transaction Details===", transactionDetails);
     return {
       orders: [order],
       token: fullToken && fullToken.token,
       paymentResponse: {
         pp_ResponseCode: transactionDetails.responseCode,
-        pp_ResponseMessage: transactionDetails.responseMessage
-      } // Include JazzCash payment response
+        pp_ResponseMessage: transactionDetails.responseMessage,
+      }, // Include JazzCash payment response
     };
   } else {
     return {
       orders: [order],
-      token: fullToken && fullToken.token
+      token: fullToken && fullToken.token,
     };
   }
 
