@@ -9,6 +9,13 @@ export default async function jazzCashPayment(
 ) {
   const fulfillmentGroup = finalFulfillmentGroups[0];
 
+  console.log("orderTotal In side the JAZZCASH PAYMENT FUNCTION", orderTotal);
+
+  console.log(
+    "fulfillmentGroup In side the JAZZCASH PAYMENT FUNCTION",
+    fulfillmentGroup
+  );
+
   // console.log(`finalFulfillmentGroups ===: INSIDE THE PAYMENT FUNCTION ${JSON.stringify(finalFulfillmentGroups, null, 2)}`);
 
   // Extracting phone and cnic
@@ -38,7 +45,8 @@ export default async function jazzCashPayment(
   const password = "23ufx2zy16";
   const integritySalt = "19300v8104";
   const txnRefNo = `T${moment().format("YYYYMMDDHHmmss")}`;
-  const amount = orderTotal;
+  // Convert amount to paisa (1 rupee = 100 paisa)
+  const amount = Math.round(orderTotal * 100);
   const txnCurrency = "PKR";
   const txnDateTime = moment().format("YYYYMMDDHHmmss");
   const billReference = "billref";
