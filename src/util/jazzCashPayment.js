@@ -33,10 +33,10 @@ export default async function jazzCashPayment(
   console.log("cnicNo", cnicNo);
 
   const url =
-    "https://sandbox.jazzcash.com.pk/ApplicationAPI/API/2.0/Purchase/DoMWalletTransaction";
-  const merchantId = "MC150326";
-  const password = "fy8d58bxg0";
-  const integritySalt = "vw68g1t9xf";
+    "https://payments.jazzcash.com.pk/ApplicationAPI/API/2.0/Purchase/DoMWalletTransaction";
+  const merchantId = "77887752";
+  const password = "23ufx2zy16";
+  const integritySalt = "19300v8104";
   const txnRefNo = `T${moment().format("YYYYMMDDHHmmss")}`;
   const amount = orderTotal;
   const txnCurrency = "PKR";
