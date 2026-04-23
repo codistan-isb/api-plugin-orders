@@ -1,6 +1,8 @@
 import ReactionError from "@reactioncommerce/reaction-error";
 import xformOrderGroupToCommonOrder from "./xformOrderGroupToCommonOrder.js";
 
+const FREE_SHIPPING_THRESHOLD = 7500;
+
 /**
  * @summary Sets `shipmentMethod` object for a fulfillment group
  * @param {Object} context An object containing the per-request state
@@ -51,6 +53,9 @@ export default async function addShipmentMethodToGroup(context, {
       " Fetch updated fulfillment options and try creating the order again with a valid method.");
   }
 
+  const itemSubtotal = group.items.reduce((sum, item) => sum + item.subtotal, 0);
+  const shippingRate = itemSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : selectedFulfillmentMethod.rate;
+
   group.shipmentMethod = {
     _id: selectedFulfillmentMethod.method._id,
     carrier: selectedFulfillmentMethod.method.carrier,
@@ -59,6 +64,6 @@ export default async function addShipmentMethodToGroup(context, {
     group: selectedFulfillmentMethod.method.group,
     name: selectedFulfillmentMethod.method.name,
     handling: selectedFulfillmentMethod.handlingPrice,
-    rate: selectedFulfillmentMethod.rate
+    rate: shippingRate
   };
 }
